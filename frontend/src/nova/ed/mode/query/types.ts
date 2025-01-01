@@ -2,6 +2,7 @@ export type TABLE_NAME = string;
 type QUERY_NAME = string;
 type COL_NAME = string;
 type REL_NAME = string;
+type MODE_REL_NAME = "lazy" | "eager";
 type WHERE_OPERATOR = string;
 export type ORDER_BY = "asc" | "desc";
 
@@ -28,6 +29,7 @@ export type PQuerySelectCol = {
 export type PQuerySelectRel = {
   rel_name: REL_NAME;
   type: "relation";
+  mode?:  MODE_REL_NAME;
   as?: string;
 } & Partial<Omit<PQuerySelect, "table" | "action">>;
 
@@ -35,7 +37,8 @@ export type PQuerySelectWhere = (
   | PQuerySelectWhereSingle
   | "and"
   | "or"
-  // | PQuerySelectWhere // g perlu rekursi dulu
+  | "not"
+  | PQuerySelectWhere
 )[];
 
 export type PQuerySelectWhereSingle = {
