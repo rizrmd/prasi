@@ -22,7 +22,7 @@ export default defineConfig({
     sourceMap: {
       js: "source-map",
     },
-    distPath: { root: "./../../../../../data/site-static" },
+    distPath: { root: "./../../../../../data/nova-static" },
     assetPrefix: "/nova",
   },
   dev: {

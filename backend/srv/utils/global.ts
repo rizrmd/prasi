@@ -1,14 +1,29 @@
 import type { Server } from "bun";
 import type { BunSqliteKeyValue } from "bun-sqlite-key-value";
-import { Script, type Context } from "node:vm";
+import { type Context } from "node:vm";
 import type { PrismaClient } from "prasi-db";
 import type { ESite } from "prasi-frontend/src/nova/ed/logic/types";
+import type { RouterContext } from "rou3";
 import type { parseTypeDef } from "./parser/parse-type-def";
-import type { bunWatchBuild } from "./site/init/bun-build";
-import type { prasi_path_v5 } from "./site/init/prasi-path-v5";
+import type { prasiBuildFrontEnd } from "./site/init/build-frontend";
+import type { prasiPathV5 } from "./site/init/prasi-path-v5";
 import type { spawn } from "./spawn";
 
 type SITE_ID = string;
+
+export type PrasiContent = {
+  pages: (ids: string[]) => Promise<Record<string, any>>;
+  comps: (ids: string[]) => Promise<Record<string, any>>;
+  route: (
+    pathname: string
+  ) => void | { params: Record<string, any>; data: { page_id: string } };
+  all_routes: () => Promise<{
+    site: { id: string; api_url: string };
+    urls: { id: string; url: string }[];
+    layout: { id: string; root: any };
+  }>;
+};
+
 export type PrasiSite = {
   id: SITE_ID;
   config: {
@@ -17,6 +32,11 @@ export type PrasiSite = {
   };
   data: ESite;
   build: PrasiSiteLoading["process"];
+  router: RouterContext<{ page_id: string }>;
+  router_base: {
+    urls: { id: string; url: string }[];
+    layout: { id: string; root: any };
+  };
   process: {
     vsc_vars: Awaited<ReturnType<typeof parseTypeDef>>;
     log: {
@@ -39,12 +59,15 @@ export type PrasiSite = {
       server: () => Server;
       mode: "vm" | "server";
       action?: "start" | "reload";
+      dev?: boolean;
+      content: PrasiContent;
     }) => Promise<void>; // defined in site-run.ts
     reload: () => Promise<void>;
+    reload_immediately: () => Promise<void>;
   };
   prasi: {
     version: number;
-    paths: ReturnType<typeof prasi_path_v5>;
+    paths: ReturnType<typeof prasiPathV5>;
   };
 };
 export type PrasiSiteLoading = {
@@ -52,8 +75,11 @@ export type PrasiSiteLoading = {
   data?: ESite;
   deps_install?: ReturnType<typeof spawn>;
   process: {
-    build_frontend?: Awaited<ReturnType<typeof bunWatchBuild>>;
-    build_backend?: ReturnType<typeof spawn>;
+    build_frontend?: Awaited<ReturnType<typeof prasiBuildFrontEnd>>;
+    build_backend?: {
+      entries: Set<string>;
+      rebuild: () => Promise<void>;
+    };
     build_typings?: ReturnType<typeof spawn>;
   };
 };

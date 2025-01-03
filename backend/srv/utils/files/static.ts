@@ -110,7 +110,6 @@ export const staticFile = async (
 
       for await (const file of glob.scan(path)) {
         if (file === opt?.index) internal.indexPath = join(path, file);
-
         static_file.paths.add(join(path, file));
 
         let type = mime.getType(file);

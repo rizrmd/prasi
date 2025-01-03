@@ -1,16 +1,17 @@
-import { gzipSync } from "bun";
+import { $, gzipSync } from "bun";
 import { platform } from "os";
+import { dirname, join } from "path";
 import { PRASI_CORE_SITE_ID, waitUntil } from "prasi-utils";
 import { editor } from "utils/editor";
 import { fs } from "utils/files/fs";
-import type { PrasiSite, PrasiSiteLoading } from "utils/global";
+import type { PrasiSiteLoading } from "utils/global";
 import { asset } from "utils/server/asset";
 import { spawn } from "utils/spawn";
 import { extractVscIndex } from "../utils/extract-vsc";
-import { bunWatchBuild } from "./bun-build";
+import { prasiBuildFrontEnd } from "./build-frontend";
+import { findImports } from "./find-imports";
 import { siteBroadcastBuildLog, siteLoadingMessage } from "./loading-msg";
-import { prasi_path_v4 } from "./prasi-path-v4";
-import { prasi_path_v5 } from "./prasi-path-v5";
+import { detectPrasi } from "./prasi-detect";
 import { siteLoaded } from "./site-loaded";
 
 export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
@@ -32,22 +33,27 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
 
   siteLoadingMessage(site_id, "Starting Frontend Build...");
 
-  const prasi: PrasiSite["prasi"] = await fs.read(
-    `code:${site_id}/site/src/prasi.json`,
-    "json"
-  );
-
-  const prasi_path =
-    prasi.version === 5 ? prasi_path_v5(site_id) : prasi_path_v4(site_id);
+  const prasi = await detectPrasi(site_id);
+  const prasi_path = prasi.paths;
 
   if (!loading.process.build_frontend) {
-    loading.process.build_frontend = await bunWatchBuild({
+    loading.process.build_frontend = await prasiBuildFrontEnd({
       outdir: fs.path(`code:${site_id}/site/build/frontend`),
       entrydir: fs.path(`code:${site_id}/site/src`),
       entrypoint: [prasi_path.index, prasi_path.internal],
       ignore: (path) => {
         if (path === prasi_path.index) return true;
         return false;
+      },
+      async onFileChanged(event, path) {
+        if (path === "package.json") {
+          let site = g.site.loaded[site_id];
+          if (!site) {
+            await waitUntil(() => g.site.loaded[site_id]);
+            site = g.site.loaded[site_id];
+          }
+          site.build.build_backend?.rebuild();
+        }
       },
       async onBuild({ status, log }) {
         const site = g.site.loaded[site_id];
@@ -57,6 +63,11 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
         if (status === "building") {
           siteBroadcastBuildLog(site_id, "Building FrontEnd...");
         }
+
+        if (status === "failed") {
+          siteBroadcastBuildLog(site_id, `Build Failed: ${log}`);
+        }
+
         if (status === "success") {
           siteBroadcastBuildLog(site_id, "Done");
           if (g.site.loading[site_id]) {
@@ -69,6 +80,9 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
           if (site) {
             const is_ready = site.process.is_ready;
             is_ready.frontend = true;
+
+            await waitUntil(() => !is_ready.typings);
+
             if (is_ready.typings) {
               const tsc = await fs.read(
                 `code:${site_id}/site/src/${prasi_path.typings}`
@@ -92,21 +106,87 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
 
   siteLoadingMessage(site_id, "Starting Backend Build...");
   if (!loading.process.build_backend) {
-    loading.process.build_backend = spawn({
-      cmd: `bun build --watch --no-clear-screen --format cjs --target bun ${prasi_path.server}  --outdir ../build/backend`,
-      cwd: fs.path(`code:${site_id}/site/src`),
-      async onMessage(arg) {
-        const site = g.site.loaded[site_id];
+    loading.process.build_backend = {
+      entries: new Set(),
+      async rebuild() {
+        if (!fs.exists(`code:${site_id}/site/src/package.json`)) {
+          await waitUntil(() =>
+            fs.exists(`code:${site_id}/site/src/package.json`)
+          );
+        }
+
+        const external = Object.keys(
+          (await fs.read(`code:${site_id}/site/src/package.json`, "json"))
+            .dependencies || {}
+        );
+
+        const entry = fs.path(`code:${site_id}/site/src/${prasi_path.server}`);
+
+        this.entries = await findImports([entry], {
+          excludeGlobs: [
+            new Bun.Glob(fs.path(`code:${site_id}/site/src/node_modules/**`)),
+          ],
+          async findTSConfig() {
+            return await fs.read(
+              fs.path(`code:${site_id}/site/src/tsconfig.json`),
+              "json"
+            );
+          },
+        });
+
+        const pkg_path = join(dirname(prasi_path.server), "package.json");
+        if (!fs.exists(`code:${site_id}/site/build/${pkg_path}`)) {
+          await fs.copy(
+            `code:${site_id}/site/src/package.json`,
+            `code:${site_id}/site/build/${pkg_path}`
+          );
+
+          siteLoadingMessage(site_id, "Installing Backend Dependencies...");
+          await $`bun i`.cwd(fs.path(`code:${site_id}/site/build/`)).quiet();
+        } else {
+          try {
+            const pkg = await fs.read(
+              `code:${site_id}/site/src/package.json`,
+              "json"
+            );
+
+            for (const k in pkg.dependencies) {
+              if (!this.entries.has(k)) {
+                await fs.copy(
+                  `code:${site_id}/site/src/package.json`,
+                  `code:${site_id}/site/build/${pkg_path}`,
+                  { overwrite: true }
+                );
+                break;
+              }
+            }
+          } catch (e) {}
+
+          siteLoadingMessage(site_id, "Installing Backend Dependencies...");
+          await $`bun i`.cwd(fs.path(`code:${site_id}/site/build/`)).quiet();
+        }
+
+        await Bun.build({
+          entrypoints: [entry],
+          target: "bun",
+          format: "cjs",
+          external,
+          outdir: join(
+            fs.path(`code:${site_id}/site/build/`),
+            dirname(prasi_path.server)
+          ),
+        });
+
+        let site = g.site.loaded[site_id];
         if (!site) {
           await waitUntil(() => g.site.loaded[site_id]);
+          site = g.site.loaded[site_id];
         }
 
         site.vm.reload();
-
-        const log = site.process.log;
-        log.build_backend += arg.text;
       },
-    });
+    };
+    loading.process.build_backend.rebuild();
   }
 
   siteLoadingMessage(site_id, "Starting Typings Builder...");

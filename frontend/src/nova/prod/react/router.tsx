@@ -5,6 +5,7 @@ import { loadPages } from "../loader/page";
 import { w } from "../root/window";
 import { useProdState } from "./store";
 import { Loading } from "utils/ui/loading";
+import { findRoute } from "rou3";
 
 export const ProdRouter = memo(() => {
   const {
@@ -35,8 +36,13 @@ export const ProdRouter = memo(() => {
     ref,
   }));
 
-  const found = router?.lookup(base.pathname);
-  const found_page = pages?.find((e) => e.id === found?.id);
+  const found = router
+    ? findRoute(router, undefined, base.pathname)
+    : undefined;
+
+  const found_page = router
+    ? pages?.find((e) => e.id === found?.data.id)
+    : undefined;
 
   if (found_page) {
     if (found_page.id !== page?.id) {

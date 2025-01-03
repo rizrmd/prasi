@@ -6,7 +6,7 @@ export const prodIndex = async (
   prasi: { page_id?: string; params?: any }
 ) => {
   let head: string[] = [];
-  const index_file = Bun.file(dir.data(`/site-static/index.html`));
+  const index_file = Bun.file(dir.data(`/nova-static/index.html`));
   if (await index_file.exists()) {
     const index = await index_file.text();
     const html = parse(index);

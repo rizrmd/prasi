@@ -112,7 +112,7 @@ export const useProdState = defineStore({
         });
 
         if (ids.length > 0) {
-          const res = await fetch(base.url`_prasi/comp`, {
+          const res = await fetch(base.url`_prasi/comps`, {
             method: "POST",
             body: JSON.stringify({ ids }),
           });

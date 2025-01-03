@@ -43,7 +43,7 @@ export const fetchViaProxy = async (
   if (!isRaw) {
     if (!isFile) {
       body = JSON.stringify(data);
-      headers["content-type"] = "aplication/json";
+      headers["content-type"] = "application/json";
     } else {
       const fd = new FormData();
       for (const file of files) {

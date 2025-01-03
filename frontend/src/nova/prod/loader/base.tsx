@@ -8,6 +8,7 @@ export const base = {
       .join("");
 
     let base_url = this.root.toString();
+
     if (base_url.endsWith("/"))
       base_url = base_url.substring(0, base_url.length - 1);
 
@@ -29,10 +30,11 @@ export const base = {
       }
 
       base.root = new URL(`${url.protocol}//${url.host}${url.pathname}`);
+
       if (base.root.pathname.endsWith("/")) {
         base.root.pathname = base.root.pathname.substring(
           0,
-          base.root.length - 1
+          base.root.pathname.length - 1
         );
       }
     }

@@ -25,13 +25,13 @@ site_srv.init();
 
 if (g.mode === "dev") {
   setupDevPort();
-  const path = fs.path(`data:site-static`);
+  const path = fs.path(`data:nova-static`);
   if (!(await existsAsync(path))) {
     await waitUntil(() => existsAsync(path));
   }
   watch(path, (e, c) => {
     asset.nova.rescan();
-  }); 
+  });
 }
 
 await waitPort(4550, {
@@ -49,9 +49,9 @@ const server = Bun.serve({
 
     if (ctx.url.pathname.startsWith("/nova")) {
       const res = asset.nova.serve(ctx, { prefix: "/nova" });
-
-      if (res) return res;
-      return new Response("");
+      if (res) {
+        return res;
+      }
     }
 
     const apiResponse = await api.serve(ctx);

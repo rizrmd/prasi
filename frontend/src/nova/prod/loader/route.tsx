@@ -1,4 +1,4 @@
-import { createRouter } from "radix3";
+import { addRoute, createRouter } from "rou3";
 import { EPageContentTree } from "../../ed/logic/types";
 import { base } from "./base";
 
@@ -57,7 +57,7 @@ export const loadRouter = async () => {
       layout = res.layout;
 
       for (const item of res.urls) {
-        router.insert(item.url, item);
+        addRoute(router, undefined, item.url, item);
         pages.push(item);
       }
     }

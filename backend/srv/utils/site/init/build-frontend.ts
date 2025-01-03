@@ -19,14 +19,16 @@ type BuildArg = {
     status: "success" | "failed" | "building";
     log?: string;
   }) => void;
+  onFileChanged?: (event: string, path: string) => void;
 };
 
-export const bunWatchBuild = async ({
+export const prasiBuildFrontEnd = async ({
   outdir,
   entrydir,
   entrypoint,
   onBuild,
   ignore,
+  onFileChanged,
 }: BuildArg) => {
   const internal = {
     building: false,
@@ -59,6 +61,10 @@ export const bunWatchBuild = async ({
   internal.watching = watchFiles({
     dir: entrydir,
     events: async (type, filename) => {
+      if (onFileChanged && filename) {
+        onFileChanged(type, filename);
+      }
+
       if (!internal.building) {
         internal.building = true;
         if (filename) {
@@ -132,7 +138,7 @@ export const bunWatchBuild = async ({
   return internal;
 };
 
-export const bunBuild = async ({ outdir, entrypoint, entrydir }: BuildArg) => {
+const bunBuild = async ({ outdir, entrypoint, entrydir }: BuildArg) => {
   await removeAsync(outdir);
 
   return await Bun.build({
