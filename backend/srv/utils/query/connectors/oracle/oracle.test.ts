@@ -22,7 +22,7 @@ describe("oracle connector", () => {
 
   test("query with 2 level relationships", async () => {
     if (inspect) {
-      const output = await conn?.query(inspect, {
+      const output = await conn?.buildSql(inspect, {
         action: "select",
         table: "user_table",
         select: [
@@ -75,7 +75,7 @@ describe("oracle connector", () => {
 
   test("query with 2 relation & 1 recursive relation", async () => {
     if (inspect) {
-      const output = await conn?.query(inspect, {
+      const output = await conn?.buildSql(inspect, {
         action: "select",
         table: "user_table",
         select: [
@@ -180,7 +180,7 @@ describe("oracle connector", () => {
 
   test("queries on tables that have more than 1FK on the same destination table", async () => {
     if (inspect) {
-      const output = await conn?.query(inspect, {
+      const output = await conn?.buildSql(inspect, {
         action: "select",
         table: "user_table",
         select: [

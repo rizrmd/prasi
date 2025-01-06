@@ -13,9 +13,17 @@ export const getWheres = (
 ): string[] => {
   const result = [] as string[];
 
-  for (const w of where) {
-    const where_name = whereName(table, w);
-    result.push(where_name);
+  let where_name = "" as string;
+  if (where && where.length) {
+    for (let i = 0; i < where.length; i++) {
+      const w = where[i];
+      if (typeof w === "object") {
+        where_name += (i === 0 ? "" : " ") + whereName(table, w);
+      } else if (typeof w === "string") {
+        where_name += (i === 0 ? "" : " ") + w.toUpperCase();
+      }
+    }
+    result.push(`(${where_name})`);
   }
 
   for (const c of select) {
@@ -44,6 +52,10 @@ const whereName = (table: NAME, where: PQuerySelectWhereSingle) => {
       break;
     case "IN":
       name = `${db_table}.${w_col} ${w_opt} (${w_val.map((item: string | number) => quoteValue(item)).join(", ")})`;
+      break;
+    case "BETWEEN":
+      // DO NOT KNOW DISPLAY & OUTPUT FROM FRONT (HANDLE IF FRONT READY)
+      name = ``;
       break;
     default:
       name = `${db_table}.${w_col} ${w_opt} ${quoteValue(w_val)}`;
