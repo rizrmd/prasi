@@ -61,6 +61,7 @@ export type PrasiSite = {
       action?: "start" | "reload";
       dev?: boolean;
       content: PrasiContent;
+      db: { orm: "prisma" | "prasi"; url: string };
     }) => Promise<void>; // defined in site-run.ts
     reload: () => Promise<void>;
     reload_immediately: () => Promise<void>;

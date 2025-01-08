@@ -31,83 +31,83 @@ export const siteProdPrasi = async ({
       const file = Bun.file(path);
       return new Response(file);
     }
-    case "type_vsc": {
-      const site = g.site.loaded[site_id];
-      let vars = {};
-      let source = "";
-      if (site) {
-        if (
-          !fs.exists(`code:${site_id}/site/src/${site.prasi.frontend.typings}`)
-        ) {
-          await waitUntil(
-            () =>
-              fs.exists(
-                `code:${site_id}/site/src/${site.prasi.frontend.typings}`
-              ),
-            { interval: 500 }
-          );
-        }
-        source = await fs.read(
-          `code:${site_id}/site/src/${site.prasi.frontend.typings}`,
-          "string"
-        );
-        vars = site.process.vsc_vars;
+    // case "type_vsc": {
+    //   const site = g.site.loaded[site_id];
+    //   let vars = {};
+    //   let source = "";
+    //   if (site) {
+    //     if (
+    //       !fs.exists(`code:${site_id}/site/src/${site.prasi.frontend.typings}`)
+    //     ) {
+    //       await waitUntil(
+    //         () =>
+    //           fs.exists(
+    //             `code:${site_id}/site/src/${site.prasi.frontend.typings}`
+    //           ),
+    //         { interval: 500 }
+    //       );
+    //     }
+    //     source = await fs.read(
+    //       `code:${site_id}/site/src/${site.prasi.frontend.typings}`,
+    //       "string"
+    //     );
+    //     vars = site.process.vsc_vars;
 
-        if (source && Object.keys(vars).length === 0) {
-          await extractVscIndex(site_id);
-          vars = site.process.vsc_vars;
-        }
-      }
-      return compressed(
-        ctx,
-        JSON.stringify({
-          vars,
-          source,
-        })
-      );
-      break;
-    }
-    case "type_def": {
-      const path = dir.data(`/code/${site_id}/site/typings.d.ts`);
-      const file = Bun.file(path);
-      if (await file.exists()) {
-        try {
-          const res = JSON.stringify(await parseTypeDef(path));
-          await Bun.write(
-            dir.data(
-              `/code/${site_id}/site/type_def.${file.lastModified}.json`
-            ),
-            res
-          );
+    //     if (source && Object.keys(vars).length === 0) {
+    //       await extractVscIndex(site_id);
+    //       vars = site.process.vsc_vars;
+    //     }
+    //   }
+    //   return compressed(
+    //     ctx,
+    //     JSON.stringify({
+    //       vars,
+    //       source,
+    //     })
+    //   );
+    //   break;
+    // }
+    // case "type_def": {
+    //   const path = dir.data(`/code/${site_id}/site/typings.d.ts`);
+    //   const file = Bun.file(path);
+    //   if (await file.exists()) {
+    //     try {
+    //       const res = JSON.stringify(await parseTypeDef(path));
+    //       await Bun.write(
+    //         dir.data(
+    //           `/code/${site_id}/site/type_def.${file.lastModified}.json`
+    //         ),
+    //         res
+    //       );
 
-          return new Response(Bun.gzipSync(res), {
-            headers: {
-              "content-type": "application/json",
-              "content-encoding": "gzip",
-            },
-          });
-        } catch (e) {}
-      }
-      return new Response("{}", {
-        headers: { "content-type": "application/json" },
-      });
-    }
-    case "typings.d.ts": {
-      const build_path = dir.data(`/code/${site_id}/site/typings.d.ts`);
-      let file = Bun.file(build_path);
+    //       return new Response(Bun.gzipSync(res), {
+    //         headers: {
+    //           "content-type": "application/json",
+    //           "content-encoding": "gzip",
+    //         },
+    //       });
+    //     } catch (e) {}
+    //   }
+    //   return new Response("{}", {
+    //     headers: { "content-type": "application/json" },
+    //   });
+    // }
+    // case "typings.d.ts": {
+    //   const build_path = dir.data(`/code/${site_id}/site/typings.d.ts`);
+    //   let file = Bun.file(build_path);
 
-      if (await file.exists()) {
-        const body = Bun.gzipSync(await file.arrayBuffer());
+    //   if (await file.exists()) {
+    //     const body = Bun.gzipSync(await file.arrayBuffer());
 
-        return new Response(body, {
-          headers: {
-            "content-type": file.type,
-            "content-encoding": "gzip",
-          },
-        });
-      }
-      return new Response("");
-    }
+    //     return new Response(body, {
+    //       headers: {
+    //         "content-type": file.type,
+    //         "content-encoding": "gzip",
+    //       },
+    //     });
+    //   }
+    //   return new Response("");
+    // }
     // case "code": {
     //   if (!site.asset) {
     //     await waitUntil(() => site.asset);
@@ -146,6 +146,7 @@ export const siteProdPrasi = async ({
               domain: true,
               responsive: true,
               config: true,
+              settings: true,
             },
           });
 

@@ -1,11 +1,5 @@
 import { removeAsync } from "fs-jetpack";
-import {
-  copyFileSync,
-  existsSync,
-  readdirSync,
-  unlinkSync
-} from "node:fs";
-import { createContext } from "node:vm";
+import { copyFileSync, existsSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "path";
 import { PRASI_CORE_SITE_ID, waitUntil } from "prasi-utils";
 import { addRoute, createRouter, findRoute } from "rou3";
@@ -16,6 +10,7 @@ import { fs } from "utils/files/fs";
 import type { PrasiSite } from "utils/global";
 import { debounce } from "utils/server/debounce";
 import { crdt_comps, crdt_pages } from "../../../ws/crdt/shared";
+import { newSiteGlobalContext } from "./site-global-ctx";
 
 export const siteLoaded = async (
   site_id: string,
@@ -72,6 +67,11 @@ export const siteLoaded = async (
     addRoute(router, undefined, page.url, { page_id: page.id });
   }
 
+  let server_path = fs.path(
+    join(`code:${site_id}/site/build`, dirname(prasi.paths.server))
+  );
+
+  const ctx = newSiteGlobalContext(loading.data!, server_path);
   g.site.loaded[site_id] = {
     build: loading.process,
     data: loading.data!,
@@ -83,7 +83,7 @@ export const siteLoaded = async (
     },
     router,
     vm: {
-      ctx: newContext(),
+      ctx: ctx,
       reload: debounce(async () => {
         await g.site.loaded[site_id].vm.reload_immediately();
       }, 100),
@@ -97,30 +97,26 @@ export const siteLoaded = async (
             is_reload = true;
           }
 
-          let target_path = fs.path(
-            join(`code:${site_id}/site/build`, dirname(prasi.paths.server))
-          );
-
-          if (existsSync(target_path)) {
+          if (existsSync(server_path)) {
             const dirs = readdirSync(fs.path(`data:site-srv/main/internal/vm`));
             for (const file of dirs) {
-              if (file === "vm.ts" && existsSync(join(target_path, file))) {
+              if (file === "vm.ts" && existsSync(join(server_path, file))) {
                 continue;
               }
 
-              if (existsSync(join(target_path, file))) {
-                unlinkSync(join(target_path, file));
+              if (existsSync(join(server_path, file))) {
+                unlinkSync(join(server_path, file));
               }
 
               copyFileSync(
                 fs.path(`data:site-srv/main/internal/vm/${file}`),
-                join(target_path, file)
+                join(server_path, file)
               );
             }
           }
 
-          const vm = require(join(target_path, "vm.ts")).vm;
-          site.vm.init = await vm(site.vm.ctx);
+          const vm = require(join(server_path, "vm.ts")).vm;
+          site.vm.init = await vm(ctx);
 
           if (site.vm.init) {
             console.log(
@@ -134,6 +130,7 @@ export const siteLoaded = async (
               prasi,
               dev: g.mode === "dev",
               action: is_reload ? "reload" : "start",
+              db: ctx.db_config,
               content: {
                 route(pathname: string) {
                   const found = findRoute(
@@ -254,81 +251,4 @@ export const siteLoaded = async (
     { site_id },
     { action: "site-ready", site: g.site.loaded[site_id].data }
   );
-};
-
-const newContext = () => {
-  const exports = {};
-  const ctx = {
-    module: { exports },
-    exports,
-    AbortController,
-    AbortSignal,
-    alert,
-    Blob,
-    Buffer,
-    Bun,
-    ByteLengthQueuingStrategy,
-    confirm,
-    atob,
-    btoa,
-    BuildMessage,
-    clearImmediate,
-    clearInterval,
-    clearTimeout,
-    console,
-    CountQueuingStrategy,
-    Crypto,
-    crypto,
-    CryptoKey,
-    CustomEvent,
-    Event,
-    EventTarget,
-    fetch,
-    FormData,
-    Headers,
-    HTMLRewriter,
-    JSON,
-    MessageEvent,
-    performance,
-    prompt,
-    process: {
-      ...process,
-      cwd() {
-        return this._cwd;
-      },
-      chdir(cwd: string) {
-        this._cwd = cwd;
-      },
-      _cwd: "",
-    },
-    queueMicrotask,
-    ReadableByteStreamController,
-    ReadableStream,
-    ReadableStreamDefaultController,
-    ReadableStreamDefaultReader,
-    reportError,
-    require,
-    ResolveMessage,
-    Response,
-    Request,
-    setImmediate,
-    setInterval,
-    setTimeout,
-    ShadowRealm,
-    SubtleCrypto,
-    DOMException,
-    TextDecoder,
-    TextEncoder,
-    TransformStream,
-    TransformStreamDefaultController,
-    URL,
-    URLSearchParams,
-    WebAssembly,
-    WritableStream,
-    WritableStreamDefaultController,
-    WritableStreamDefaultWriter,
-  } as any;
-  ctx.global = ctx;
-  ctx.globalThis = ctx;
-  return createContext(ctx);
 };

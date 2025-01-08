@@ -8,23 +8,28 @@ export type DeployTarget = {
   db: {
     url: string;
     orm: "prasi" | "prisma";
-  },
+  };
   history: {
     ts: number;
-  }[]
+  }[];
 };
 export const internal = Symbol(`[internal]`);
 
 export type SiteSettings = {
   prasi: {
-    file: {
+    file?: {
       upload_to: DEPLOY_TARGET_NAME;
     };
-    db: {
-      use: "deploy-target" | "db-url";
-      connect_to: DEPLOY_TARGET_NAME;
-      db_url: string;
-    };
+    db?:
+      | {
+          use: "deploy_target";
+          deploy_target: DEPLOY_TARGET_NAME;
+        }
+      | {
+          use: "db_url";
+          orm: "prisma" | "prasi";
+          db_url: string;
+        };
   };
   deploy_targets: DeployTarget[];
 };

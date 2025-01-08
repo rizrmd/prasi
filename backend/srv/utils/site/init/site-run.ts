@@ -19,7 +19,7 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
     interval: 1000,
   });
 
-  siteLoadingMessage(site_id, "Installing dependencies...");
+  siteLoadingMessage(site_id, "Installing Frontend Dependencies...");
   if (!loading.deps_install) {
     loading.deps_install = spawn({
       cmd: `bun i`,
@@ -121,7 +121,6 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
         );
 
         const entry = fs.path(`code:${site_id}/site/src/${prasi_path.server}`);
-
         this.entries = await findImports([entry], {
           excludeGlobs: [
             new Bun.Glob(fs.path(`code:${site_id}/site/src/node_modules/**`)),
