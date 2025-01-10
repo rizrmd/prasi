@@ -34,18 +34,25 @@ if (g.mode === "dev") {
   });
 }
 
+let wait = {
+  timeout: null as any,
+};
 await waitPort(4550, {
   onPortUsed() {
-    console.log(`Waiting for port 4550 to be available...`);
-  },
+    clearTimeout(wait.timeout);
+    wait.timeout = setTimeout(() => {
+      console.log(`Waiting for port 4550 to be available...`);
+    }, 1000);
+  }, 
 });
+clearTimeout(wait.timeout); 
 
 const server = Bun.serve({
   port: 4550,
   websocket: g.mode === "dev" ? devWS : initWS,
   async fetch(request, server) {
     const ctx = serverContext(server, request);
-    if (ctx.ws) return undefined; 
+    if (ctx.ws) return undefined;
 
     if (ctx.url.pathname.startsWith("/nova")) {
       const res = asset.nova.serve(ctx, { prefix: "/nova" });
