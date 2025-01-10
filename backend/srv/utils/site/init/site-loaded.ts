@@ -7,10 +7,15 @@ import sync from "sync-directory";
 import { c } from "utils/color";
 import { editor } from "utils/editor";
 import { fs } from "utils/files/fs";
-import type { PrasiSite } from "utils/global";
+import type { PrasiSite, PrasiVMInitArg } from "utils/global";
 import { debounce } from "utils/server/debounce";
 import { crdt_comps, crdt_pages } from "../../../ws/crdt/shared";
 import { newSiteGlobalContext } from "./site-global-ctx";
+import { newPrasiIpcArg } from "./prasi-ipc-arg";
+import { basename } from "node:path";
+import { newPrasiIpcContent } from "./prasi-ipc-content";
+import { siteLoadingMessage } from "./loading-msg";
+import { spawn } from "utils/spawn";
 
 export const siteLoaded = async (
   site_id: string,
@@ -67,11 +72,8 @@ export const siteLoaded = async (
     addRoute(router, undefined, page.url, { page_id: page.id });
   }
 
-  let server_path = fs.path(
-    join(`code:${site_id}/site/build`, dirname(prasi.paths.server))
-  );
+  let server_dir = fs.path(`code:${site_id}/site/build/backend`);
 
-  const ctx = newSiteGlobalContext(loading.data!, server_path);
   g.site.loaded[site_id] = {
     build: loading.process,
     data: loading.data!,
@@ -81,148 +83,74 @@ export const siteLoaded = async (
       urls: pages,
       layout,
     },
+    last_msg: "Initializing",
     router,
-    vm: {
-      ctx: ctx,
+    spawn: {
       reload: debounce(async () => {
-        await g.site.loaded[site_id].vm.reload_immediately();
+        await g.site.loaded[site_id].spawn.reload_immediately();
       }, 100),
-      async reload_immediately() {
-        try {
-          const site = g.site.loaded[site_id];
-          let is_reload = false;
+      async reload_immediately(mode?: "init") {
+        const site = g.site.loaded[site_id];
 
-          if (site.vm.init) {
-            delete site.vm.init;
-            is_reload = true;
+        if (mode === "init") {
+          delete site.spawn.handler;
+          await removeAsync(join(server_dir, "app"));
+          await siteLoadingMessage(site_id, "Initializing IPC...");
+        }
+ 
+        try {
+          site.content = newPrasiIpcContent({ site_id, site });
+
+          if (site.spawn.ipc && !site.spawn.ipc.process.killed) {
+            site.spawn.ipc.process.kill();
+            await site.spawn.ipc.exited;
           }
 
-          if (existsSync(server_path)) {
+          if (existsSync(server_dir)) {
             const dirs = readdirSync(fs.path(`data:site-srv/main/internal/vm`));
             for (const file of dirs) {
-              if (file === "vm.ts" && existsSync(join(server_path, file))) {
-                continue;
-              }
-
-              if (existsSync(join(server_path, file))) {
-                unlinkSync(join(server_path, file));
+              if (existsSync(join(server_dir, file))) {
+                unlinkSync(join(server_dir, file));
               }
 
               copyFileSync(
                 fs.path(`data:site-srv/main/internal/vm/${file}`),
-                join(server_path, file)
+                join(server_dir, file)
               );
             }
           }
 
-          const vm = require(join(server_path, "vm.ts")).vm;
-          site.vm.init = await vm(ctx);
+          let action: PrasiVMInitArg["action"] =
+            mode === "init" ? "init" : "start";
 
-          if (site.vm.init) {
-            console.log(
-              `${c.magenta}[SITE]${c.esc} ${site_id} ${is_reload ? "Reloading" : "Starting"}.`
-            );
-
-            await site.vm.init({
-              site_id,
-              server: () => g.server,
-              mode: "vm",
+          site.spawn.ipc = spawn({
+            cmd: "bun run ipc.ts",
+            cwd: server_dir,
+            ipc(message, subprocess) {},
+            async onMessage(arg) {
+              process.stdout.write(arg.raw);
+              await siteLoadingMessage(site_id, arg.text);
+            },
+            restart_on_exit: action !== "init",
+          });
+ 
+          const settings = site.data.settings;
+          site.spawn.ipc.process.send(
+            newPrasiIpcArg({
+              action,
+              settings,
               prasi,
-              dev: g.mode === "dev",
-              action: is_reload ? "reload" : "start",
-              db: ctx.db_config,
-              content: {
-                route(pathname: string) {
-                  const found = findRoute(
-                    site.router,
-                    undefined,
-                    pathname || ""
-                  );
-                  if (found) {
-                    return {
-                      params: found.params || {},
-                      data: { page_id: found.data.page_id },
-                    };
-                  }
-                  return undefined;
-                },
-                async comps(ids) {
-                  const result = {} as Record<string, any>;
-                  const pending_ids = [] as string[];
-                  for (const id of ids) {
-                    const existing = crdt_comps[id];
-                    if (existing) {
-                      result[id] = existing.doc.getMap("data").toJSON();
-                    } else {
-                      pending_ids.push(id);
-                    }
-                  }
-                  if (pending_ids.length > 0) {
-                    (
-                      await _db.component.findMany({
-                        where: { id: { in: pending_ids } },
-                        select: {
-                          id: true,
-                          content_tree: true,
-                        },
-                      })
-                    ).map((e) => {
-                      result[e.id] = e.content_tree;
-                    });
-                  }
-                  return result;
-                },
-                async pages(ids: string[]) {
-                  const result = [] as { id: string; root: any; url: string }[];
-                  const pending_ids = [] as string[];
-                  for (const id of ids) {
-                    const existing = crdt_pages[id];
-                    if (existing) {
-                      result.push({
-                        id,
-                        root: existing.doc.getMap("data").toJSON(),
-                        url: existing.url,
-                      });
-                    } else {
-                      pending_ids.push(id);
-                    }
-                  }
-                  if (pending_ids.length > 0) {
-                    (
-                      await _db.page.findMany({
-                        where: { id: { in: pending_ids } },
-                        select: {
-                          id: true,
-                          content_tree: true,
-                          url: true,
-                        },
-                      })
-                    ).map((e) => {
-                      result.push({
-                        id: e.id,
-                        root: e.content_tree,
-                        url: e.url,
-                      });
-                    });
-                  }
-                  return result;
-                },
-                async all_routes() {
-                  return {
-                    site: {
-                      id: site_id,
-                      api_url: site.data.config.api_url || "",
-                    },
-                    urls: site.router_base.urls,
-                    layout: site.router_base.layout,
-                  };
-                },
+              site_id, 
+            })
+          );
+
+          if (action === "init") {
+            await site.spawn.ipc.process.exited;
+            site.spawn.handler = {
+              async http(req) {
+                return new Response("hello");
               },
-            });
-          } else {
-            console.log(
-              `${c.magenta}[SITE]${c.esc} ${site_id} Failed to start.`
-            );
+            };
           }
         } catch (e) {
           console.log(
@@ -245,8 +173,8 @@ export const siteLoaded = async (
     },
     prasi,
   };
+  await g.site.loaded[site_id].spawn.reload_immediately("init");
   delete g.site.loading[site_id];
-
   editor.broadcast(
     { site_id },
     { action: "site-ready", site: g.site.loaded[site_id].data }

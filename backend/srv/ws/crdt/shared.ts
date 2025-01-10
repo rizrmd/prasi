@@ -3,7 +3,7 @@ import { dirAsync } from "fs-jetpack";
 import { dir } from "utils/files/dir";
 import BunORM from "utils/files/sqlite";
 import { Awareness } from "y-protocols/awareness.js";
-import { Doc, UndoManager } from "yjs";
+import type { Doc, UndoManager } from "yjs";
 import type { WSContext } from "utils/server/ctx";
 
 export const MAX_HISTORY_SIZE = 750;
@@ -21,7 +21,7 @@ const createPageDb = async (site_id: string) => {
           ts: { type: "INTEGER" },
         },
       },
-    },
+    }, 
   });
 };
 

@@ -45,7 +45,7 @@ const server = Bun.serve({
   websocket: g.mode === "dev" ? devWS : initWS,
   async fetch(request, server) {
     const ctx = serverContext(server, request);
-    if (ctx.ws) return undefined;
+    if (ctx.ws) return undefined; 
 
     if (ctx.url.pathname.startsWith("/nova")) {
       const res = asset.nova.serve(ctx, { prefix: "/nova" });

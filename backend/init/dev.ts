@@ -15,7 +15,7 @@ process.env.FORCE_COLOR = "1";
 
 const dev = {
   backend: spawn({
-    cmd: `bun run --silent --watch --no-clear-screen backend/srv/server.ts dev`,
+    cmd: `bun run --silent --hot --no-clear-screen backend/srv/server.ts dev`,
     mode: "passthrough",
   }),
   rsbuild_print: false,

@@ -8,7 +8,8 @@ export const prasiPathV5 = (site_id: string) => ({
   dir: {
     nova: fs.path(`data:nova-static`),
     site: fs.path(`code:${site_id}/site`),
-    build: fs.path(`code:${site_id}/site/build`),
+    frontend: fs.path(`code:${site_id}/site/build/frontend`),
+    backend: fs.path(`code:${site_id}/site/build/backend`),
     upload: fs.path(`code:${site_id}/site/upload`),
     public: fs.path(`code:${site_id}/site/src/frontend/public`),
   },

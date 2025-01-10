@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "bun run --silent backend/init/dev-bun.ts",
-    "dev": "bun run --watch --silent backend/init/dev.ts",
+    "dev": "bun run --hot --silent backend/init/dev.ts",
     "prep": "bun run --silent backend/init/prep.ts",
     "prod": "bun run --silent backend/init/prod.ts",
     "db": "cd backend/db && bun prisma db pull && bun prisma generate && cd ../.."

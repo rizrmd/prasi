@@ -1,13 +1,18 @@
 import type { Server } from "bun";
 import type { BunSqliteKeyValue } from "bun-sqlite-key-value";
-import { type Context } from "node:vm";
 import type { PrismaClient } from "prasi-db";
 import type { ESite } from "prasi-frontend/src/nova/ed/logic/types";
 import type { RouterContext } from "rou3";
+import type * as yjs_import from "yjs";
 import type { parseTypeDef } from "./parser/parse-type-def";
 import type { prasiBuildFrontEnd } from "./site/init/build-frontend";
 import type { prasiPathV5 } from "./site/init/prasi-path-v5";
-import type { spawn } from "./spawn";
+import type { Spawn, spawn } from "./spawn";
+
+import type { bind } from "prasi-frontend/src/nova/ed/crdt/lib/immer-yjs";
+import type { applyAwarenessUpdate, Awareness } from "y-protocols/awareness.js";
+import type * as syncProtocol from "y-protocols/sync.js";
+import type { readSyncMessage } from "y-protocols/sync.js";
 
 type SITE_ID = string;
 
@@ -24,6 +29,15 @@ export type PrasiContent = {
   }>;
 };
 
+export type PrasiVMInitArg = {
+  site_id: string;
+  prasi: PrasiSite["prasi"];
+  mode: "ipc" | "server";
+  action?: "start" | "reload" | "init";
+  dev?: boolean;
+  db: { orm: "prisma" | "prasi"; url: string };
+};
+
 export type PrasiSite = {
   id: SITE_ID;
   config: {
@@ -31,8 +45,10 @@ export type PrasiSite = {
     api_url?: string;
   };
   data: ESite;
+  last_msg: string;
   build: PrasiSiteLoading["process"];
   router: RouterContext<{ page_id: string }>;
+  content?: PrasiContent;
   router_base: {
     urls: { id: string; url: string }[];
     layout: { id: string; root: any };
@@ -51,20 +67,11 @@ export type PrasiSite = {
       typings: boolean;
     };
   };
-  vm: {
-    ctx: Context;
-    init?: (arg: {
-      site_id: string;
-      prasi: PrasiSite["prasi"];
-      server: () => Server;
-      mode: "vm" | "server";
-      action?: "start" | "reload";
-      dev?: boolean;
-      content: PrasiContent;
-      db: { orm: "prisma" | "prasi"; url: string };
-    }) => Promise<void>; // defined in site-run.ts
+  spawn: {
+    handler?: { http: (req: Request) => Promise<Response> };
+    ipc?: Spawn;
     reload: () => Promise<void>;
-    reload_immediately: () => Promise<void>;
+    reload_immediately: (mode?: "init") => Promise<void>;
   };
   prasi: {
     version: number;
@@ -93,12 +100,21 @@ export interface PrasiGlobal {
     loaded: Record<SITE_ID, PrasiSite>;
     loading: Record<SITE_ID, PrasiSiteLoading>;
   };
+  content: PrasiContent;
   rsbuild: {
     prasi_port: 0;
     site_port: 0;
   };
   server: Server;
   static_cache: { gz: BunSqliteKeyValue; zstd: BunSqliteKeyValue };
+  crdt: {
+    yjs: typeof yjs_import;
+    bind: typeof bind;
+    applyAwarenessUpdate: typeof applyAwarenessUpdate;
+    Awareness: typeof Awareness;
+    syncProtocol: typeof syncProtocol;
+    readSyncMessage: typeof readSyncMessage;
+  };
 }
 
 declare global {

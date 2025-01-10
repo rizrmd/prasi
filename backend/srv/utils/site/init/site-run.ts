@@ -133,15 +133,16 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
           },
         });
 
-        const pkg_path = join(dirname(prasi_path.server), "package.json");
-        if (!fs.exists(`code:${site_id}/site/build/${pkg_path}`)) {
+        if (!fs.exists(`code:${site_id}/site/build/backend/package.json`)) {
           await fs.copy(
             `code:${site_id}/site/src/package.json`,
-            `code:${site_id}/site/build/${pkg_path}`
+            `code:${site_id}/site/build/backend/package.json`
           );
 
           siteLoadingMessage(site_id, "Installing Backend Dependencies...");
-          await $`bun i`.cwd(fs.path(`code:${site_id}/site/build/`)).quiet();
+          await $`bun i`
+            .cwd(fs.path(`code:${site_id}/site/build/backend`))
+            .quiet();
         } else {
           try {
             const pkg = await fs.read(
@@ -153,7 +154,7 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
               if (!this.entries.has(k)) {
                 await fs.copy(
                   `code:${site_id}/site/src/package.json`,
-                  `code:${site_id}/site/build/${pkg_path}`,
+                  `code:${site_id}/site/build/backend/package.json`,
                   { overwrite: true }
                 );
                 break;
@@ -162,7 +163,9 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
           } catch (e) {}
 
           siteLoadingMessage(site_id, "Installing Backend Dependencies...");
-          await $`bun i`.cwd(fs.path(`code:${site_id}/site/build/`)).quiet();
+          await $`bun i`
+            .cwd(fs.path(`code:${site_id}/site/build/backend`))
+            .quiet();
         }
 
         await Bun.build({
@@ -170,10 +173,8 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
           target: "bun",
           format: "cjs",
           external,
-          outdir: join(
-            fs.path(`code:${site_id}/site/build/`),
-            dirname(prasi_path.server)
-          ),
+          banner: `const db = global.db;`,
+          outdir: fs.path(`code:${site_id}/site/build/backend`),
         });
 
         let site = g.site.loaded[site_id];
@@ -182,7 +183,7 @@ export const siteRun = async (site_id: string, loading: PrasiSiteLoading) => {
           site = g.site.loaded[site_id];
         }
 
-        site.vm.reload();
+        site.spawn.reload();
       },
     };
     loading.process.build_backend.rebuild();

@@ -23,11 +23,7 @@ export default {
 
     const site = g.site.loaded[site_id];
     let site_ready = false;
-    if (
-      site &&
-      site.vm.init &&
-      typeof site.vm.ctx?.prasi?.handler?.http === "function"
-    ) {
+    if (site && typeof site.spawn.handler?.http === "function") {
       site_ready = true;
     }
 
@@ -36,10 +32,14 @@ export default {
     }
 
     if (!site_ready) {
+      let status = g.site.loading[site_id]?.status;
+      if (site) {
+        status = site.last_msg;
+      }
       return new Response(
         `\
 <pre>
-${g.site.loading[site_id]?.status || "Preparing Site..."}
+${status || "Preparing Site..."}
 ------------------------------------
 ${site_id}
 </pre>
@@ -53,6 +53,6 @@ setTimeout(() => {
       );
     }
 
-    return await site.vm.ctx.prasi.handler?.http(req);
+    return await site.spawn.handler?.http(req);
   },
 };

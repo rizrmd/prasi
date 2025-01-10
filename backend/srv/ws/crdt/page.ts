@@ -2,13 +2,9 @@ import type { ServerWebSocket } from "bun";
 import { dirAsync } from "fs-jetpack";
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
-import { bind } from "prasi-frontend/src/nova/ed/crdt/lib/immer-yjs";
 import { waitUntil } from "prasi-utils";
 import { validate } from "uuid";
-import { applyAwarenessUpdate, Awareness } from "y-protocols/awareness.js";
-import * as syncProtocol from "y-protocols/sync.js";
-import { readSyncMessage } from "y-protocols/sync.js";
-import { applyUpdate, Doc, encodeStateAsUpdate, UndoManager } from "yjs";
+import type { UndoManager } from "yjs";
 import { editor } from "../../utils/editor";
 import type { WSContext } from "../../utils/server/ctx";
 import {
@@ -18,6 +14,7 @@ import {
   MAX_HISTORY_SIZE,
 } from "./shared";
 import { dir, isLocalPC } from "utils/files/dir";
+import { initCRDT } from "./init";
 
 const crdt_loading = new Set<string>();
 
@@ -35,6 +32,18 @@ export const wsPageClose = (ws: ServerWebSocket<WSContext>) => {
 };
 
 export const wsPage = async (ws: ServerWebSocket<WSContext>, raw: Buffer) => {
+  if (!g.crdt) {
+    g.crdt = await initCRDT();
+  }
+  const { applyUpdate, Doc, encodeStateAsUpdate, UndoManager } = g.crdt.yjs;
+  const {
+    bind,
+    Awareness,
+    syncProtocol,
+    applyAwarenessUpdate,
+    readSyncMessage,
+  } = g.crdt;
+
   const page_id = ws.data.pathname.substring(`/crdt/page-`.length);
 
   if (!validate(page_id)) {

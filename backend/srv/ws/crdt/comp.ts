@@ -2,18 +2,15 @@ import type { ServerWebSocket } from "bun";
 import { dirAsync } from "fs-jetpack";
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
-import { bind } from "prasi-frontend/src/nova/ed/crdt/lib/immer-yjs";
 import type { IItem } from "prasi-frontend/src/utils/types/item";
 import { waitUntil } from "prasi-utils";
 import { dir, isLocalPC } from "utils/files/dir";
 import BunORM from "utils/files/sqlite";
 import { validate } from "uuid";
-import { applyAwarenessUpdate, Awareness } from "y-protocols/awareness.js";
-import * as syncProtocol from "y-protocols/sync.js";
-import { readSyncMessage } from "y-protocols/sync.js";
-import { applyUpdate, Doc, encodeStateAsUpdate, UndoManager } from "yjs";
+import type { UndoManager } from "yjs";
 import { editor } from "../../utils/editor";
 import type { WSContext } from "../../utils/server/ctx";
+import { initCRDT } from "./init";
 import { crdt_comps, MAX_HISTORY_SIZE } from "./shared";
 
 const crdt_loading = new Set<string>();
@@ -48,6 +45,18 @@ export const wsCompClose = (ws: ServerWebSocket<WSContext>) => {
 };
 
 export const wsComp = async (ws: ServerWebSocket<WSContext>, raw: Buffer) => {
+  if (!g.crdt) {
+    g.crdt = await initCRDT();
+  } 
+  const { applyUpdate, Doc, encodeStateAsUpdate, UndoManager } = g.crdt.yjs;
+  const {
+    bind,
+    Awareness,
+    syncProtocol,
+    applyAwarenessUpdate,
+    readSyncMessage, 
+  } = g.crdt;
+
   const comp_id = ws.data.pathname.substring(`/crdt/comp-`.length);
 
   if (!validate(comp_id)) {
@@ -152,7 +161,7 @@ export const wsComp = async (ws: ServerWebSocket<WSContext>, raw: Buffer) => {
 
         const updated_at = new Date();
         crdt_comps[comp_id].updated_at = updated_at.getTime();
-        
+
         // await _db.component.update({
         //   where: { id: comp_id },
         //   data: {
