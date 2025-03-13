@@ -1,0 +1,7 @@
+{
+  "name": "server",
+  "dependencies": {
+    "bun-sqlite-key-value": "^1.13.1",
+    "chalk": "^5.4.1"
+  }
+}
