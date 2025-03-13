@@ -7,7 +7,7 @@ export const dir = {
     const paths = {
       "data:": "../data",
       "frontend:": "./frontend",
-      "dist:": "./backend",
+      "backend:": "./backend",
     };
 
     // Check if input starts with any of the defined prefixes

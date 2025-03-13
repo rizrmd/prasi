@@ -29,7 +29,8 @@
       "db/*": ["./backend/db/*"],
       "utils/*": ["./backend/utils/src/*"],
       "deploy/*": ["./backend/deploy/*"],
-      "frontend/*": ["./frontend/*"]
+      "prasi/*": ["./backend/prasi/src/*"],
+      "frontend/*": ["./frontend/src/*"]
     }
   }
 }

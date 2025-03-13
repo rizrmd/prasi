@@ -2,6 +2,7 @@ import { PrismaClient } from "db/use";
 import { dir } from "utils/dir";
 import { enhancePrisma } from "utils/prisma";
 import { g } from "./global";
+import { routeWatch } from "prasi/page/route-watch";
 
 export const initServer = async () => {
   dir.ensure("data:sqlite");
