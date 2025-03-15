@@ -12,6 +12,7 @@ export const watcher = {
     try {
       const watcher = watch(resolvedPath, callback);
       this.current[path] = watcher;
+      return watcher;
     } catch (err) {
       console.error(err);
     }

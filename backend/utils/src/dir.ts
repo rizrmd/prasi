@@ -22,6 +22,10 @@ export const dir = {
     // If no prefix matches, return the original input resolved from current directory
     return resolve(process.cwd(), input);
   },
+  exists: (path: string) => {
+    const fullPath = dir.path(path);
+    return fs.existsSync(fullPath);
+  },
   ensure: (path: string) => {
     const fullPath = dir.path(path);
     const parts = fullPath.split("/");

@@ -1,3 +1,8 @@
 {
-  "name": "utils"
+  "name": "utils",
+  "dependencies": {
+    "@types/lodash": "^4.17.16",
+    "@umijs/mako": "^0.11.6",
+    "lodash": "^4.17.21"
+  }
 }

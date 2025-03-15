@@ -9,8 +9,8 @@
   ],
   "scripts": {
     "prisma": "cd backend/db && bun --silent prisma",
-    "prod": "bun backend/server/start.ts",
-    "dev": "bun --hot --no-clear-screen --silent backend/server/start.ts --dev"
+    "prod": "bun backend/server/src/start.ts",
+    "dev": "bun --hot --no-clear-screen --silent backend/server/src/start.ts --dev"
   },
   "devDependencies": {
     "@types/bun": "^1.2.5"

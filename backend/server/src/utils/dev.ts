@@ -2,7 +2,7 @@ import { watcher } from "utils/watcher";
 import { g } from "./global";
 import chalk from "chalk";
 import { routeWatch } from "prasi/page/route-watch";
-import { frontend } from "utils/frontend";
+import { frontend } from "utils/src/build/frontend";
 import { dir } from "utils/dir";
 
 export const initDev = () => {
