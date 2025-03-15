@@ -1,5 +1,7 @@
 import * as ReactTypes from "react";
 import * as ReactDomTypes from "react-dom";
+import * as ReactJSX from "react/jsx-runtime";
+import * as ReactJSXDev from "react/jsx-dev-runtime";
 import { initSite } from "../site/init-site";
 import { navigate as import_navigate } from "./navigate";
 import { css as import_css } from "goober";
@@ -8,8 +10,11 @@ declare global {
   interface Window {
     React: typeof ReactTypes;
     ReactDOM: typeof ReactDomTypes;
+    JSXRuntime: typeof ReactJSX;
+    JSXDevRuntime: typeof ReactJSXDev;
     initSite: typeof initSite;
     navigate: typeof import_navigate;
+    baseurl: typeof import_navigate.baseurl;
     css: typeof import_css;
     cx: typeof import_cx;
     cn: typeof import_cx;

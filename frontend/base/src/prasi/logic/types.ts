@@ -69,10 +69,21 @@ export type FNCompDef = {
   is_name?: boolean;
   onChange?: string;
   onChangeBuilt?: string;
+  jsxPass?: {
+    hash: string;
+    exports: Record<string, any & { item_id: string }>;
+  };
   content?: IItem;
   visible?: string;
   meta?: FNCompMeta;
 };
+
+export type DeepReadonly<T> = T extends Function
+  ? T
+  : T extends object
+  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T;
+
 type FNCompMeta = {
   type: "file" | "text" | "option" | "content-element" | "list";
   options?: string;

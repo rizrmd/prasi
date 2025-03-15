@@ -116,7 +116,7 @@ export const Site = {
           await bundleEsbuild({
             root: dir.path(`data:code/${site.site.id}/site/src`),
             entryfile,
-            external: prasi.exclude,
+            external: [...(prasi.exclude || []), "react", "react-dom"],
             outdir,
             logs(log) {
               site.log.build.backend.push(log);

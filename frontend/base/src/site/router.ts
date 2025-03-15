@@ -1,3 +1,5 @@
+import type { IItem } from "src/prasi/logic/types";
+
 type Page = { id: string; url: string; name: string };
 type RouteMatch = { page: Page; params: Record<string, string> } | null;
 type RouteEntry = { url: string; page: Page; paramCount: number };
@@ -5,7 +7,16 @@ type RouteEntry = { url: string; page: Page; paramCount: number };
 export type Router = typeof router;
 export const router = {
   routes: [] as RouteEntry[],
-  layout: null as any,
+  layout: null as null | {
+    content_tree: {
+      id: string;
+      id_page: string;
+      responsive: "desktop" | "mobile";
+      type: "root";
+      childs: IItem[];
+      component_ids: string[];
+    };
+  },
   init(pages: Page[]) {
     this.routes = [];
     for (const page of pages) {

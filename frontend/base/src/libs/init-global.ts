@@ -1,14 +1,19 @@
 import react from "react";
 import react_dom from "react-dom";
+import * as ReactJSX from "react/jsx-runtime";
+import * as ReactJSXDev from "react/jsx-dev-runtime";
 import { initSite } from "../site/init-site";
-import { navigate } from "./navigate";
+import { baseurl, navigate } from "./navigate";
 import { css } from "goober";
 import { cx } from "./cx";
 export const initGlobal = (siteReady: typeof window.siteReady) => {
   window.React = react;
   window.ReactDOM = react_dom;
+  window.JSXRuntime = ReactJSX;
+  window.JSXDevRuntime = ReactJSXDev;
   window.initSite = initSite;
   window.navigate = navigate;
+  window.baseurl = baseurl;
   window.css = css;
   window.siteReady = siteReady;
   window.cx = cx;
