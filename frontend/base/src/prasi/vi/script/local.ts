@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { DeepReadonly, IItem } from "src/prasi/logic/types";
 
 export const viLocal = (arg: {
@@ -9,10 +9,12 @@ export const viLocal = (arg: {
     value,
     _mode,
     effect,
+    children,
   }: {
     value: T;
     _mode?: "render" | "read-write";
     effect?: (local: any) => void;
+    children: ReactElement;
   }) => {
     if (_mode !== "read-write") {
       const local = useRef(value).current as unknown as T & {
@@ -25,7 +27,7 @@ export const viLocal = (arg: {
         effect?.(local);
       }, []);
 
-      return local;
+      return children;
     }
   };
 };

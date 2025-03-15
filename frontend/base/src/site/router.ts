@@ -1,23 +1,31 @@
 import type { IItem } from "src/prasi/logic/types";
 
-type Page = { id: string; url: string; name: string };
-type RouteMatch = { page: Page; params: Record<string, string> } | null;
-type RouteEntry = { url: string; page: Page; paramCount: number };
+export type PageRoute = { id: string; url: string; name: string };
+type RouteMatch = { page: PageRoute; params: Record<string, string> } | null;
+type RouteEntry = { url: string; page: PageRoute; paramCount: number };
 
-export type Router = typeof router;
-export const router = {
+export type Router = ReturnType<typeof createRouter>;
+export type PageContent = {
+  id: string;
+  id_page: string;
+  responsive: "desktop" | "mobile";
+  type: "root";
+  childs: IItem[];
+  component_ids: string[];
+};
+export const createRouter = () => ({
   routes: [] as RouteEntry[],
-  layout: null as null | {
-    content_tree: {
-      id: string;
-      id_page: string;
-      responsive: "desktop" | "mobile";
-      type: "root";
-      childs: IItem[];
-      component_ids: string[];
-    };
+  current: null as null | RouteMatch,
+  pages: {} as Record<string, PageContent>,
+  get page() {
+    const page_id = this.current?.page.id;
+    if (page_id) {
+      return this.pages[page_id];
+    }
+    return null;
   },
-  init(pages: Page[]) {
+  layout: null as null | PageContent,
+  init(pages: PageRoute[]) {
     this.routes = [];
     for (const page of pages) {
       // Skip layout pages
@@ -102,4 +110,6 @@ export const router = {
 
     return null;
   },
-};
+});
+
+export const router = createRouter();

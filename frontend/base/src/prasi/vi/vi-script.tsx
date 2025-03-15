@@ -20,6 +20,7 @@ export const ViScript: FC<{
       <ViItem item={e} key={key} is_layout={is_layout} />
     )),
     Local: write.Local,
+    preload: () => {},
   };
   if (!write.jsBuilt) {
     write.jsBuilt = ref(

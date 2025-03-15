@@ -5,6 +5,7 @@ import { g } from "./global";
 import { site } from "./site";
 import { staticInfo } from "./static";
 import { prasiDB } from "./prasi/db";
+import chalk from "chalk";
 
 const main = async () => {
   const port = argv.get("--port");
@@ -49,11 +50,11 @@ const main = async () => {
     console.error(e);
   }
 
-  const http = g.backend?.server?.http;
+  const http = g.backend?.server?.http.bind(g.backend.server);
   g.server = Bun.serve({
     port,
     async fetch(req) {
-      const handle = async (req: Request, opt?: any) => {
+      const handle = async function (req: Request, opt?: any) {
         const static_public = staticPublic.serve(req);
         if (static_public.status !== 404) return static_public;
 
@@ -78,7 +79,7 @@ const main = async () => {
     },
   });
 
-  console.log(`Site ${site.id} ~> http://localhost:${port}`);
+  console.log(`🚀 Started ${chalk.green(site.id)} ~> http://localhost:${port}`);
 
   process.on("SIGINT", () => {
     console.log("Shutting down...");

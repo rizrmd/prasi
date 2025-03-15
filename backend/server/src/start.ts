@@ -10,6 +10,7 @@ import { staticFile } from "utils/server/static";
 import { routePrasiLayout } from "./routes/prasi/layout";
 import { routePrasiPages } from "./routes/prasi/pages";
 import { routePrasiInfo } from "./routes/prasi/info";
+import { routePrasiPage } from "./routes/prasi/page";
 
 initServer();
 
@@ -59,6 +60,7 @@ g.server = Bun.serve({
     "/prod/:site_id/*": routeProd,
     "/_prasi/:site_id/layout": routePrasiLayout,
     "/_prasi/:site_id/pages": routePrasiPages,
+    "/_prasi/:site_id/page/:page_id": routePrasiPage,
     "/_prasi/:site_id/info": routePrasiInfo,
   },
   fetch(request) {

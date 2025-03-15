@@ -19,8 +19,11 @@ declare global {
     cx: typeof import_cx;
     cn: typeof import_cx;
     prasi_site: {
+      id: string;
+      serverurl: string;
+      baseurl: string;
       exports: Record<string, any>;
-      urls: { pages: string; layout: string };
+      urls: { pages: string; layout: string; page: string };
     };
     siteReady: (rootElement: ReactTypes.ReactComp) => void;
   }

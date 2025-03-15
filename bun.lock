@@ -24,6 +24,7 @@
     "backend/deploy": {
       "name": "deploy",
       "dependencies": {
+        "chalk": "^5.4.1",
         "msgpackr": "^1.11.2",
       },
     },

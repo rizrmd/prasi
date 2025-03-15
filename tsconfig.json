@@ -30,7 +30,7 @@
       "utils/*": ["./backend/utils/src/*"],
       "deploy/*": ["./backend/deploy/*"],
       "prasi/*": ["./backend/prasi/src/*"],
-      "frontend/*": ["./frontend/src/*"]
+      "frontend/*": ["./frontend/*"]
     }
   }
 }

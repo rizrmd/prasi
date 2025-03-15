@@ -2,18 +2,17 @@ import type { RouterTypes } from "bun";
 import { db } from "db/use";
 import { compressedResponse } from "server/utils/compressed";
 
-export const routePrasiLayout: RouterTypes.RouteHandler<
-  "/_prasi/:site_id/layout"
+export const routePrasiPage: RouterTypes.RouteHandler<
+  "/_prasi/:site_id/page/:page_id"
 > = async (req) => {
-  const layout = await db.page.findFirst({
+  const page = await db.page.findFirst({
     select: {
       content_tree: true,
     },
     where: {
       id_site: req.params.site_id,
-      is_deleted: false,
-      name: { startsWith: "layout:" },
+      id: req.params.page_id,
     },
   });
-  return compressedResponse(layout?.content_tree || {});
+  return compressedResponse(page?.content_tree || {});
 };

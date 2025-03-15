@@ -1,5 +1,6 @@
 import type { RouterTypes } from "bun";
 import { db } from "db/use";
+import { compressedResponse } from "server/utils/compressed";
 
 export const routePrasiInfo: RouterTypes.RouteHandler<
   "/_prasi/:site_id/info"
@@ -10,5 +11,5 @@ export const routePrasiInfo: RouterTypes.RouteHandler<
       is_deleted: false,
     },
   });
-  return Response.json(site);
+  return compressedResponse(site);
 };

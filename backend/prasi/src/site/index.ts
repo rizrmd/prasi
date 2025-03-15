@@ -76,7 +76,6 @@ export const Site = {
       };
       await this.startWatch(site_id);
       await this.startServer(site_id, (res.config as any).api_url, port);
-      delete this.loading[site_id];
       return this.loaded[site_id];
     }
   },
@@ -149,8 +148,9 @@ export const Site = {
         {
           mode: "pipe",
           pipe: (output) => {
-            console.log(output);
-            if (output && !resolved) {
+            process.stdout.write(output);
+            if (output.includes("🚀") && !resolved) {
+              delete this.loading[site_id];
               resolved = true;
               resolve();
             }
