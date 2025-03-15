@@ -5,7 +5,7 @@
   "private": true,
   "workspaces": [
     "backend/*",
-    "frontend"
+    "frontend/*"
   ],
   "scripts": {
     "prisma": "cd backend/db && bun --silent prisma",

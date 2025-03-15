@@ -4,7 +4,7 @@ import { routeBuild } from "./route-build";
 export const routeWatch = async () => {
   await routeBuild();
 
-  watcher.add(`frontend:src/pages`, async () => {
+  watcher.add(`frontend:editor/src/pages`, async () => {
     await routeBuild();
   });
 };

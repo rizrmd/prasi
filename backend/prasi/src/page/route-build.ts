@@ -2,9 +2,9 @@ import { dir } from "utils/dir";
 import { join, parse } from "path";
 import { writeFileSync } from "fs";
 export const routeBuild = async () => {
-  dir.ensure(`frontend:src/generated`);
+  dir.ensure(`frontend:editor/src/generated`);
   const routes: Record<string, string> = {};
-  const files = dir.list(`frontend:src/pages`);
+  const files = dir.list(`frontend:editor/src/pages`);
   for (const file of files) {
     const { name, ext } = parse(file);
     if (ext === ".tsx") {

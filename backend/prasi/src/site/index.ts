@@ -137,7 +137,7 @@ export const Site = {
       run(
         `bun run --silent --hot ${dir.path(
           "backend:deploy/src/start.ts"
-        )} --port=${port}`,
+        )} --port=${port} --id=${site_id}`,
         {
           mode: "pipe",
           pipe: (output) => {

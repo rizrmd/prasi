@@ -10,12 +10,12 @@ export const initDev = () => {
     console.log(`Running in ${chalk.blue("DEV")} mode`);
 
     g.dev = {};
-    watcher.add("frontend:src/pages", (file) => {
+    watcher.add("frontend:editor/src/pages", (file) => {
       console.log("pages changed");
     });
     routeWatch();
     frontend.dev({
-      entryfile: dir.path("frontend:src/index.tsx"),
+      entryfile: dir.path("frontend:editor/src/index.tsx"),
       outdir: dir.path("data:editor/frontend"),
     });
   }
