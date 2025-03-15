@@ -5,7 +5,6 @@ export type BuilderArg = {
   root: string;
   entryfile: string;
   outdir: string;
-  external?: string[];
   watch?: boolean;
   config?: BuildParams["config"];
 };
@@ -19,15 +18,21 @@ const bundle = async (arg: BuilderArg) => {
 
   if (await Bun.file(tsconfig.path).exists()) {
     tsconfig.exists = true;
-    const tsconfig_file = await Bun.file(tsconfig.path).json();
-    if (tsconfig_file.compilerOptions?.paths) {
-      for (const [key, value] of Object.entries(
-        tsconfig_file.compilerOptions.paths
-      ) as any) {
-        const alias = key.endsWith("/*") ? key.slice(0, -2) : key;
-        const path = value[0].endsWith("/*") ? value[0].slice(0, -2) : value[0];
-        tsconfig.alias.push([alias, path]);
+    try {
+      const tsconfig_file = await Bun.file(tsconfig.path).json();
+      if (tsconfig_file.compilerOptions?.paths) {
+        for (const [key, value] of Object.entries(
+          tsconfig_file.compilerOptions.paths
+        ) as any) {
+          const alias = key.endsWith("/*") ? key.slice(0, -2) : key;
+          const path = value[0].endsWith("/*")
+            ? value[0].slice(0, -2)
+            : value[0];
+          tsconfig.alias.push([alias, path]);
+        }
       }
+    } catch (e) {
+      console.log(`Failed to read ${tsconfig.path}`);
     }
   }
 
@@ -74,7 +79,6 @@ const bundle = async (arg: BuilderArg) => {
         extensions: ["js", "jsx", "ts", "tsx"],
       },
       clean: true,
-      ignores: arg.external,
       devtool: "source-map",
       platform: "browser",
       entry: {

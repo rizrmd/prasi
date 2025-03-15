@@ -8,6 +8,9 @@ export const initProd = async () => {
     root: dir.path("frontend:base"),
     entryfile: dir.path("frontend:editor/src/index.tsx"),
     outdir: dir.path("data:frontend/editor"),
+    config: {
+      externals: undefined,
+    },
   });
   await frontend.build({
     root: dir.path("frontend:base"),

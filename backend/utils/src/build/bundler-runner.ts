@@ -31,6 +31,13 @@ export const runBundler = async (
         ipc: { onMessage(message) {} },
         started(proc) {
           const props = { ...arg };
+          if (props.config) {
+            for (const [k, v] of Object.entries(props.config)) {
+              if (typeof v === "undefined") {
+                delete (props.config as any)[k];
+              }
+            }
+          }
           delete props.logs;
           proc.send(props);
         },

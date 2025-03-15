@@ -18,6 +18,9 @@ export const initDev = async () => {
       root: dir.path("frontend:base"),
       entryfile: dir.path("frontend:base/src/index.tsx"),
       outdir: dir.path("data:frontend/base"),
+      config: {
+        externals: undefined,
+      },
     });
     await frontend.dev({
       root: dir.path("frontend:editor"),

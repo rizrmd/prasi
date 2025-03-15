@@ -8,6 +8,7 @@
     "frontend/*"
   ],
   "scripts": {
+    "prestart": "bun prisma generate",
     "prisma": "cd backend/db && bun --silent prisma",
     "prod": "bun backend/server/src/start.ts",
     "dev": "bun --hot --no-clear-screen --silent backend/server/src/start.ts --dev"

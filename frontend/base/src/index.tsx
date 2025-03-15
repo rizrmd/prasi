@@ -1,16 +1,11 @@
 import { createRoot } from "react-dom/client";
+import { initGlobal } from "./global";
 
-// Clear the existing HTML content
+await initGlobal();
+
 document.body.innerHTML = '<div id="app"></div>';
-
-// Render your React component instead
 const div = document.getElementById("app");
 if (div) {
   const root = createRoot(div);
-  const Marko = (await import("./marko")).Marko;
-  root.render(
-    <h1>
-      Hello kun <Marko />
-    </h1>
-  );
+  root.render(<h1>oaisnf</h1>);
 }

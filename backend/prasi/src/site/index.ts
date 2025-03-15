@@ -111,9 +111,11 @@ export const Site = {
               `data:code/${site.site.id}/site/src/${input.frontend}`
             ),
             outdir: dir.path(`data:code/${site.site.id}/site/dist/frontend`),
-            external: prasi.exclude,
             logs(log) {
               site.log.build.frontend.push(log);
+            },
+            config: {
+              ignores: prasi.exclude,
             },
           });
         },
