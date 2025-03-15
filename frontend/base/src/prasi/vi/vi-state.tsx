@@ -1,8 +1,10 @@
 import type { ReactElement } from "react";
 import { proxy, useSnapshot } from "valtio";
+import type { viLocal } from "./script/local";
 
 type ItemState = {
   jsBuilt?: (render: (el: ReactElement) => void, ...args: any[]) => void;
+  Local?: ReturnType<typeof viLocal>;
 };
 
 export const write = proxy({

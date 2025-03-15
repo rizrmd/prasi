@@ -1,3 +1,6 @@
 {
-  "name": "deploy"
+  "name": "deploy",
+  "dependencies": {
+    "msgpackr": "^1.11.2"
+  }
 }

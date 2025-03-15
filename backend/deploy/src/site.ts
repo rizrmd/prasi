@@ -1,1 +1,1 @@
-export const site = { id: "" };
+export const site = { id: "", url: "" };

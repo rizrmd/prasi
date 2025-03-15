@@ -7,6 +7,9 @@ import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import { dir } from "utils/dir";
 import { staticFile } from "utils/server/static";
+import { routePrasiLayout } from "./routes/prasi/layout";
+import { routePrasiPages } from "./routes/prasi/pages";
+import { routePrasiInfo } from "./routes/prasi/info";
 
 initServer();
 
@@ -54,6 +57,9 @@ g.server = Bun.serve({
   routes: {
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
+    "/_prasi/:site_id/layout": routePrasiLayout,
+    "/_prasi/:site_id/pages": routePrasiPages,
+    "/_prasi/:site_id/info": routePrasiInfo,
   },
   fetch(request) {
     const editorResult = jsEditor.serve(request);

@@ -9,6 +9,7 @@ export const staticInfo = (site_id: string) => {
   return {
     js_base: dir.path(`data:frontend/base`),
     js_site: dir.path(`data:code/${site_id}/site/dist/frontend`),
+    backend: dir.path(`data:code/${site_id}/site/dist/backend`),
     public_file: dir.path(`data:code/${site_id}/site/src/public`),
     compression: {
       enabled: false,

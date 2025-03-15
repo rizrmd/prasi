@@ -1,28 +1,28 @@
-import { readFileSync } from "node:fs";
-import { dir } from "utils/dir";
+import { join } from "node:path";
 import { staticFile } from "utils/server/static";
 import { argv } from "utils/src/argv";
-import { staticInfo } from "./static";
-import { routePrasiPage } from "./prasi/pages";
+import { g } from "./global";
 import { site } from "./site";
-import { routePrasiLayout } from "./prasi/layout";
+import { staticInfo } from "./static";
+import { prasiDB } from "./prasi/db";
 
 const main = async () => {
   const port = argv.get("--port");
   const site_id = argv.get("--id");
+  const site_url = argv.get("--url");
 
   if (!port) {
     console.error("Failed to get port");
     process.exit(1);
   }
 
-  if (!site_id) {
-    console.error("Failed to get site_id");
+  if (!site_id || !site_url) {
+    console.error("Failed to get site_id or site_url");
     process.exit(1);
   }
 
   site.id = site_id;
-
+  site.url = site_url;
   const sinfo = staticInfo(site_id);
   const staticBase = staticFile({
     baseDir: sinfo.js_base,
@@ -38,20 +38,43 @@ const main = async () => {
     compression: sinfo.compression,
   });
 
-  Bun.serve({
+  try {
+    await prasiDB(site.url);
+
+    g.backend = await import(join(sinfo.backend, "server.js"));
+    if (g.backend?.server?.init) {
+      await g.backend.server.init();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  const http = g.backend?.server?.http;
+  g.server = Bun.serve({
     port,
-    routes: {
-      "/_prasi/pages": routePrasiPage,
-      "/_prasi/layout": routePrasiLayout,
-    },
-    fetch(req) {
-      const static_public = staticPublic.serve(req);
-      if (static_public.status !== 404) return static_public;
+    async fetch(req) {
+      const handle = async (req: Request, opt?: any) => {
+        const static_public = staticPublic.serve(req);
+        if (static_public.status !== 404) return static_public;
 
-      const static_site = staticSite.serve(req);
-      if (static_site.status !== 404) return static_site;
+        const static_site = staticSite.serve(req);
+        if (static_site.status !== 404) return static_site;
 
-      return staticBase.serve(req);
+        return staticBase.serve(req);
+      };
+
+      if (!http) return handle(req);
+
+      const url = new URL(req.url);
+      return await http({
+        url: { raw: url, pathname: url.pathname },
+        req,
+        server: g.server,
+        mode: "dev",
+        handle,
+        index: { head: [], body: [], render: () => "" },
+        prasi: {},
+      });
     },
   });
 

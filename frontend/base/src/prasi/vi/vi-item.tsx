@@ -9,6 +9,10 @@ export const ViItem: FC<{
   is_layout: boolean;
 }> = ({ item, is_layout }) => {
   const vi = viRead();
+
+  if (item.name === "children" && is_layout) {
+  }
+
   if (item.adv?.jsBuilt) {
     return <ViScript item={item} is_layout={is_layout} />;
   }

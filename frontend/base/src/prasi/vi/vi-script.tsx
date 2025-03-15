@@ -4,6 +4,7 @@ import type { DeepReadonly, IItem } from "../logic/types";
 import { ViItem } from "./vi-item";
 import { viProps } from "./vi-props";
 import { viRead, viState } from "./vi-state";
+import { viLocal } from "./script/local";
 
 export const ViScript: FC<{
   item: DeepReadonly<IItem>;
@@ -13,20 +14,23 @@ export const ViScript: FC<{
   const { write } = viState({ mode: "layout", id: item.id });
   const jsBuilt = item.adv?.jsBuilt!;
 
-  const keys = ["props", "children"];
-  const values = [] as any[];
-  for (const [k, v] of Object.entries(window.prasi_site.exports)) {
-    keys.push(k);
-    values.push(v);
-  }
+  const args = {
+    props: viProps(item, { mode: vi.mode }),
+    children: item.childs.map((e, key) => (
+      <ViItem item={e} key={key} is_layout={is_layout} />
+    )),
+    Local: write.Local,
+  };
   if (!write.jsBuilt) {
     write.jsBuilt = ref(
       new Function(
         "render",
-        ...keys,
+        ...Object.keys(args),
+        ...Object.keys(window.prasi_site.exports),
         `try { ${jsBuilt} } catch(e) {console.error(e)}`
       )
     ) as any;
+    write.Local = viLocal({ item, is_layout });
   }
 
   let result = { el: null as ReactNode | null };
@@ -34,12 +38,9 @@ export const ViScript: FC<{
     (el) => {
       result.el = el;
     },
-    viProps(item, { mode: vi.mode }),
-    item.childs.map((e, key) => (
-      <ViItem item={e} key={key} is_layout={is_layout} />
-    )),
-    ...values
+    ...Object.values(args),
+    ...Object.values(window.prasi_site.exports)
   );
 
-  return <>{result.el}</>;
+  return result.el;
 };

@@ -75,7 +75,7 @@ export const Site = {
         },
       };
       await this.startWatch(site_id);
-      await this.startServer(site_id, port);
+      await this.startServer(site_id, (res.config as any).api_url, port);
       delete this.loading[site_id];
       return this.loaded[site_id];
     }
@@ -139,16 +139,17 @@ export const Site = {
       await Promise.all([build.frontend(), await build.backend()]);
     }
   },
-  async startServer(site_id: string, port: number) {
+  async startServer(site_id: string, site_url: string, port: number) {
     let resolved = false;
     await new Promise<void>((resolve) => {
       run(
         `bun run --silent --hot ${dir.path(
           "backend:deploy/src/start.ts"
-        )} --port=${port} --id=${site_id}`,
+        )} --port=${port} --id=${site_id} --url=${site_url}`,
         {
           mode: "pipe",
           pipe: (output) => {
+            console.log(output);
             if (output && !resolved) {
               resolved = true;
               resolve();

@@ -4,7 +4,7 @@ export const prasiUrls = (site_id: string) => {
   const standalone = argv.get("--standalone") ? true : false;
 
   return {
-    pages: `/prod/${site_id}/_prasi/pages`,
-    layout: `/prod/${site_id}/_prasi/layout`,
+    pages: `/_prasi/${site_id}/pages`,
+    layout: `/_prasi/${site_id}/layout`,
   };
 };
