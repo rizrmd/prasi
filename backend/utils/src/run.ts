@@ -21,7 +21,7 @@ export const run = async (
     pipe?: (output: string) => string | void;
     cwd?: string;
     started?: (proc: Subprocess) => void;
-    stdin?: string | Buffer;
+    stdin?: "ignore" | "pipe" | "inherit";
     ipc?: {
       onMessage: (message: unknown) => void;
     };
@@ -128,8 +128,8 @@ export const run = async (
       const spawnOptions: SpawnConfig = {
         stdio:
           arg?.mode === "passthrough"
-            ? ["ignore", "inherit", "inherit"]
-            : ["ignore", "pipe", "pipe"],
+            ? [arg?.stdin ? arg.stdin : "ignore", "inherit", "inherit"]
+            : [arg?.stdin ? arg.stdin : "ignore", "pipe", "pipe"],
         cwd: arg?.cwd ? dir.path(arg.cwd) : process.cwd(),
       };
 

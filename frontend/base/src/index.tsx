@@ -1,11 +1,17 @@
 import { createRoot } from "react-dom/client";
-import { initGlobal } from "./global";
+import { initGlobal } from "./libs/init-global";
+import "./index.css";
 
-await initGlobal();
+initGlobal((rootElement) => {
+  let div = document.getElementById("app");
+  if (!div) {
+    div = document.createElement("div");
+    div.id = "app";
+    document.body.prepend(div);
+  }
 
-document.body.innerHTML = '<div id="app"></div>';
-const div = document.getElementById("app");
-if (div) {
-  const root = createRoot(div);
-  root.render(<h1>oaisnf</h1>);
-}
+  if (div) {
+    const root = createRoot(div);
+    root.render(rootElement);
+  }
+});

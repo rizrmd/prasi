@@ -3,6 +3,7 @@
   "dependencies": {
     "@types/lodash": "^4.17.16",
     "@umijs/mako": "^0.11.6",
+    "esbuild": "^0.25.1",
     "lodash": "^4.17.21"
   }
 }

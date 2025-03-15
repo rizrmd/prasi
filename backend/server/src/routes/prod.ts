@@ -1,4 +1,5 @@
 import type { BunRequest, RouterTypes } from "bun";
+import { gzipSync } from "bun";
 import { Site } from "prasi/site";
 import { validate } from "uuid";
 
@@ -14,12 +15,53 @@ export const routeProd: RouterTypes.RouteHandler<
       Site.load(params.site_id);
     }
     if (site) {
-      const res = await fetch(`http://localhost:${site.port}${params["*"]}`, {
-        method: req.method,
-        headers: req.headers,
-        body: req.body,
-      });
-      return res;
+      try {
+        const res = await fetch(`http://localhost:${site.port}${params["*"]}`, {
+          method: req.method,
+          headers: req.headers,
+          body: req.body,
+        });
+        
+        const resContentType = res.headers.get("content-type") || "";
+        
+        // Only compress text-based content
+        if (resContentType.includes("text/") || 
+            resContentType.includes("application/json") ||
+            resContentType.includes("application/json") ||
+            resContentType.includes("application/javascript") ||
+            resContentType.includes("application/xml")) {
+          
+          const content = await res.text();
+          const compressed = gzipSync(content);
+          
+          const headers = new Headers(res.headers);
+          headers.set("content-encoding", "gzip");
+          headers.set("content-length", compressed.length.toString());
+          
+          return new Response(compressed, {
+            status: res.status,
+            headers,
+          });
+        }
+        
+        return res;
+      } catch (e) {
+        return new Response(
+          `
+          <pre>
+Failed to load site ${params.site_id}
+proxying to ~> <a href="http://localhost:${site.port}" target="_blank">http://localhost:${site.port}</a>  
+
+----
+` + e + `</pre>`,
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "text/html",
+            },
+          }
+        );
+      }
     } else {
       const loading = Site.loading[params.site_id];
       return new Response("Loading: " + loading?.status, { status: 202 });

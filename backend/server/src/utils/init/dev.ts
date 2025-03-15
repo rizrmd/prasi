@@ -14,6 +14,9 @@ export const initDev = async () => {
       console.log("pages changed");
     });
     routeWatch();
+    dir.ensure("data:frontend/base");
+    dir.ensure("data:frontend/editor");
+
     await frontend.dev({
       root: dir.path("frontend:base"),
       entryfile: dir.path("frontend:base/src/index.tsx"),
@@ -22,7 +25,14 @@ export const initDev = async () => {
         externals: undefined,
       },
     });
-    await frontend.dev({
+    frontend.tailwind({
+      root: dir.path("frontend:base/src/"),
+      input: dir.path("frontend:base/src/index.css"),
+      output: dir.path("data:frontend/base/main.css"),
+      mode: "dev",
+    });
+
+    frontend.dev({
       root: dir.path("frontend:editor"),
       entryfile: dir.path("frontend:editor/src/index.tsx"),
       outdir: dir.path("data:frontend/editor"),

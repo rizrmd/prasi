@@ -1,19 +1,19 @@
-import type { BuilderArg } from "./bundler-main";
-import { runBundler } from "./bundler-runner";
+import type { BuilderArg } from "./bundler-mako-process";
+import { bundleMako } from "./bundler-mako";
 import { dirname } from "path";
 
 export const backend = {
   dev: async (arg: BuilderArg & { logs?: (log: string) => string | void }) => {
-    await runBundler({
+    await bundleMako({
       name: `be~${dirname(arg.entryfile).substring(process.cwd().length)}`,
       ...arg,
-      external: ["bun"],
       watch: true,
       config: {
         ...arg.config,
         devServer: false,
         platform: "node",
         hmr: false,
+        ignores: ["bun"],
         devtool: "source-map",
         minify: false,
         codeSplitting: false,

@@ -21,9 +21,33 @@ if (!g.server) {
   init = true;
 }
 
-const baseDir = dir.path(`data:frontend/base`);
-const st = staticFile({
-  basePath: baseDir,
+const jsBase = staticFile({
+  baseDir: dir.path(`data:frontend/base`),
+  pathPrefix: "/js/base",
+  indexHtml: (req: Request) => {
+    return `\
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/js/base/index.css" />
+  </head>
+  <body>
+    <script type="module" src="/js/base/index.js"></script>
+    <script type="module" src="/js/editor/index.js"></script>
+  </body>
+</html>
+`;
+  },
+  compression: {
+    enabled: true,
+  },
+});
+
+const jsEditor = staticFile({
+  baseDir: dir.path(`data:frontend/editor`),
+  pathPrefix: "/js/editor",
+  compression: { enabled: true },
 });
 
 g.server = Bun.serve({
@@ -31,8 +55,12 @@ g.server = Bun.serve({
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
   },
-  fetch(request, server) {
-    return st.serve(request);
+  fetch(request) {
+    const editorResult = jsEditor.serve(request);
+    if (editorResult.status !== 404) {
+      return editorResult;
+    }
+    return jsBase.serve(request);
   },
 });
 

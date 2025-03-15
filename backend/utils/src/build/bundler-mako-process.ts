@@ -1,3 +1,7 @@
+/**
+ * bundler-mako cannot be used to build site frontend, because of it always output iife.
+ * We need to output esm for the frontend.
+ */
 import { build, type BuildParams } from "@umijs/mako";
 import { join } from "path";
 
@@ -45,7 +49,7 @@ const bundle = async (arg: BuilderArg) => {
       output: {
         path: arg.outdir,
         mode: "bundle",
-        preserveModules: true,
+        ...arg.config?.output,
       },
       mode: "production",
       codeSplitting: {

@@ -12,6 +12,13 @@ export const initProd = async () => {
       externals: undefined,
     },
   });
+  await frontend.tailwind({
+    root: dir.path("frontend:base/src"),
+    input: dir.path("frontend:base/src/index.css"),
+    output: dir.path("data:frontend/base/index.css"),
+    mode: "prod",
+  });
+
   await frontend.build({
     root: dir.path("frontend:base"),
     entryfile: dir.path("frontend:base/src/index.tsx"),

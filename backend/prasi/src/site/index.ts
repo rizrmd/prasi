@@ -1,12 +1,13 @@
 import type { Subprocess } from "bun";
 import { db, type site as DBSite } from "db/use";
+import { backend } from "utils/build/backend";
+import { bundleBun } from "utils/build/bundler-bun";
 import { dir } from "utils/dir";
 import { getFreePort } from "utils/port";
 import { run } from "utils/run";
-import { frontend } from "utils/src/build/frontend";
 import { loadGitRepo } from "./git-repo";
-import { backend } from "utils/build/backend";
-
+import { rimraf } from "rimraf";
+import { bundleEsbuild } from "utils/build/bundler-esbuild";
 export const Site = {
   loaded: {} as Record<
     string,
@@ -26,7 +27,9 @@ export const Site = {
   >,
   loading: {} as Record<string, { status: string; promise: Promise<DBSite> }>,
   check(site_id: string) {
-    return this.loaded[site_id];
+    if (this.loaded[site_id] && !this.loading[site_id]) {
+      return this.loaded[site_id];
+    }
   },
   async load(site_id: string) {
     if (this.loaded[site_id]) {
@@ -56,7 +59,7 @@ export const Site = {
       });
       await this.loading[site_id].promise;
       const port = await getFreePort();
-      this.loading[site_id].status = "Starting site server on port " + port;
+      this.loading[site_id].status = "Waiting site server on port " + port;
 
       this.loaded[site_id] = {
         site: res,
@@ -71,10 +74,8 @@ export const Site = {
           backend: new Set(),
         },
       };
-      await Promise.all([
-        this.startServer(site_id, port),
-        this.startWatch(site_id),
-      ]);
+      await this.startWatch(site_id);
+      await this.startServer(site_id, port);
       delete this.loading[site_id];
       return this.loaded[site_id];
     }
@@ -105,17 +106,20 @@ export const Site = {
             prasi = await prasi_file.json();
           } catch (e) {}
 
-          await frontend.dev({
+          const outdir = dir.path(
+            `data:code/${site.site.id}/site/dist/frontend`
+          );
+          const entryfile = dir.path(
+            `data:code/${site.site.id}/site/src/${input.frontend}`
+          );
+          await rimraf(outdir);
+          await bundleEsbuild({
             root: dir.path(`data:code/${site.site.id}/site/src`),
-            entryfile: dir.path(
-              `data:code/${site.site.id}/site/src/${input.frontend}`
-            ),
-            outdir: dir.path(`data:code/${site.site.id}/site/dist/frontend`),
+            entryfile,
+            external: prasi.exclude,
+            outdir,
             logs(log) {
-              site.log.build.frontend.push(log);
-            },
-            config: {
-              ignores: prasi.exclude,
+              site.log.build.backend.push(log);
             },
           });
         },
@@ -132,7 +136,7 @@ export const Site = {
           });
         },
       };
-      await Promise.all([build.frontend(), build.backend()]);
+      await Promise.all([build.frontend(), await build.backend()]);
     }
   },
   async startServer(site_id: string, port: number) {
@@ -145,7 +149,6 @@ export const Site = {
         {
           mode: "pipe",
           pipe: (output) => {
-            console.log(output);
             if (output && !resolved) {
               resolved = true;
               resolve();

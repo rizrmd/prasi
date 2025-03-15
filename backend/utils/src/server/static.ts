@@ -1,16 +1,56 @@
-import { existsSync, statSync } from "node:fs";
+import { file, gzipSync } from "bun";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 interface StaticHandler {
   serve(req: Request): Response;
+}
+export const compressableTypes = [
+  "text/plain",
+  "text/html",
+  "text/css",
+  "text/javascript",
+  "application/javascript",
+  "application/json",
+  "application/xml",
+  "image/svg+xml",
+];
+interface CompressionOptions {
+  enabled?: boolean; // Whether compression is enabled
+  minSize?: number; // Minimum size in bytes before compression is applied
+  types?: string[]; // Content types to compress
+}
+
+// Extend ResponseInit to include Bun's compression option
+interface BunResponseInit extends ResponseInit {
+  compress?: boolean;
 }
 
 const generateETag = (stat: { size: number; mtime: Date }): string => {
   return `${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}`;
 };
 
+const shouldCompress = (
+  size: number,
+  type: string,
+  options: Required<CompressionOptions>
+): boolean => {
+  // Extract base content type without parameters
+  const baseType = type.split(";").shift() || type;
+
+  return (
+    options.enabled &&
+    size >= options.minSize &&
+    options.types.includes(baseType.trim())
+  );
+};
+
 // Serve regular static file
-const serveFile = (filePath: string, req: Request): Response | null => {
+const serveFile = (
+  filePath: string,
+  req: Request,
+  compress: Required<CompressionOptions>
+): Response | null => {
   if (!existsSync(filePath)) {
     return null;
   }
@@ -28,16 +68,32 @@ const serveFile = (filePath: string, req: Request): Response | null => {
     return new Response(null, { status: 304 });
   }
 
-  return new Response(file, {
-    headers: {
-      "Content-Type": file.type,
-      ETag: etag,
-    },
+  const headers = new Headers({
+    "Content-Type": file.type,
+    ETag: etag,
   });
+
+  // Check if we should compress this response
+  if (shouldCompress(stat.size, file.type, compress)) {
+    if (req.headers.get("accept-encoding")?.includes("gzip")) {
+      const compressed = gzipSync(readFileSync(filePath));
+      headers.set("content-encoding", "gzip");
+      headers.set("content-length", compressed.length.toString());
+      return new Response(compressed, {
+        headers,
+      });
+    }
+  }
+
+  return new Response(file, { headers });
 };
 
 // Serve HTML content with proper headers
-const serveHtml = (content: string, req: Request): Response => {
+const serveHtml = (
+  content: string,
+  req: Request,
+  compress: Required<CompressionOptions>
+): Response => {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(content);
   const stat = {
@@ -51,20 +107,34 @@ const serveHtml = (content: string, req: Request): Response => {
     return new Response(null, { status: 304 });
   }
 
-  return new Response(content, {
-    headers: {
-      "Content-Type": "text/html",
-      "Cache-Control": "no-cache",
-      ETag: etag,
-    },
+  const headers = new Headers({
+    "Content-Type": "text/html",
+    "Cache-Control": "no-cache",
+    ETag: etag,
   });
+
+  // Check if we should compress this response
+  if (shouldCompress(stat.size, "text/html", compress)) {
+    if (req.headers.get("accept-encoding")?.includes("gzip")) {
+      const compressed = gzipSync(content);
+      headers.set("content-encoding", "gzip");
+      headers.set("content-length", compressed.length.toString());
+      return new Response(compressed, {
+        headers,
+      });
+    }
+  }
+
+  return new Response(content, { headers });
 };
 
 export const staticFile = (arg: {
-  basePath: string;
+  baseDir: string;
+  pathPrefix?: string;
   indexHtml?: (req: Request) => string;
+  compression?: CompressionOptions;
 }): StaticHandler => {
-  const basePath = arg.basePath;
+  const basePath = arg.baseDir;
   // Ensure base path exists and is a directory
   if (!existsSync(basePath)) {
     throw new Error(`Static directory not found: ${basePath}`);
@@ -74,11 +144,26 @@ export const staticFile = (arg: {
     throw new Error(`Path is not a directory: ${basePath}`);
   }
 
+  // Setup compression options with defaults
+  const compress: Required<CompressionOptions> = {
+    enabled: true,
+    minSize: 1024, // 1KB
+    types: compressableTypes,
+    ...arg.compression,
+  };
+
   return {
     serve(req: Request): Response {
       try {
         const url = new URL(req.url);
-        const filePath = join(basePath, decodeURIComponent(url.pathname));
+        let pathname = decodeURIComponent(url.pathname);
+
+        // Handle pathPrefix if specified
+        if (arg.pathPrefix && pathname.startsWith(arg.pathPrefix)) {
+          pathname = pathname.slice(arg.pathPrefix.length);
+        }
+
+        const filePath = join(basePath, pathname);
 
         // Prevent directory traversal
         if (!filePath.startsWith(basePath)) {
@@ -86,17 +171,22 @@ export const staticFile = (arg: {
         }
 
         // Try serving the requested file first
-        const fileResponse = serveFile(filePath, req);
+        const fileResponse = serveFile(filePath, req, compress);
         if (fileResponse) return fileResponse;
 
         // If file doesn't exist or is directory, try index handler for non-file URLs
         if (arg.indexHtml && !url.pathname.includes(".")) {
           const htmlContent = arg.indexHtml(req);
-          return serveHtml(htmlContent, req);
+          return serveHtml(htmlContent, req, compress);
         }
 
-        // Nothing worked - return 404
-        return new Response("Not Found", { status: 404 });
+        // If no file match and no indexHtml, return 404 with special header
+        return new Response("Not Found", {
+          status: 404,
+          headers: {
+            "X-Static-Handler": "no-match",
+          },
+        });
       } catch (error) {
         console.error("Error serving static file:", error);
         return new Response("Internal Server Error", { status: 500 });

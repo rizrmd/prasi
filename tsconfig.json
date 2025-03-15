@@ -25,7 +25,7 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "paths": {
-      "server/*": ["./backend/server/src*"],
+      "server/*": ["./backend/server/src/*"],
       "db/*": ["./backend/db/*"],
       "utils/*": ["./backend/utils/src/*"],
       "deploy/*": ["./backend/deploy/*"],

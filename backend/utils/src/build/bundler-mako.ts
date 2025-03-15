@@ -1,8 +1,8 @@
 import { run } from "utils/run";
-import type { BuilderArg } from "./bundler-main";
+import type { BuilderArg } from "./bundler-mako-process";
 import { dir } from "utils/dir";
 
-export const runBundler = async (
+export const bundleMako = async (
   arg: BuilderArg & {
     name: string;
     logs?: (log: string) => string | void;
@@ -12,12 +12,12 @@ export const runBundler = async (
   await new Promise<void>((resolve) => {
     run(
       `bun run --silent ${dir.path(
-        "backend:utils/src/build/bundler-main.ts"
+        "backend:utils/src/build/bundler-mako-process.ts"
       )} ${arg.name}`,
       {
         mode: "pipe",
         pipe(output) {
-          if (output.includes("Complete!") && !completed) {
+          if (output.includes("Built in") && !completed) {
             completed = true;
             resolve();
           }

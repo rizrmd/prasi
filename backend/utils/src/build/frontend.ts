@@ -1,8 +1,9 @@
-import type { BuilderArg } from "./bundler-main";
-import { runBundler } from "./bundler-runner";
+import type { BuilderArg } from "./bundler-mako-process";
+import { bundleMako } from "./bundler-mako";
 import { dirname } from "path";
 import trim from "lodash/trim";
 import type { BuildParams } from "@umijs/mako";
+import { run } from "utils/run";
 
 const config: BuildParams["config"] = {
   platform: "browser",
@@ -12,8 +13,24 @@ const config: BuildParams["config"] = {
   },
 };
 export const frontend = {
+  tailwind: async (arg: {
+    root: string;
+    input: string;
+    output: string;
+    mode: "dev" | "prod";
+  }) => {
+    if (arg.mode === "dev") {
+      run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -w -m`, {
+        mode: "silent",
+        cwd: arg.root,
+        stdin: "inherit",
+      });
+    } else {
+      await run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -m`);
+    }
+  },
   dev: async (arg: BuilderArg & { logs?: (log: string) => string | void }) => {
-    await runBundler({
+    await bundleMako({
       ...arg,
       watch: true,
       config: {
@@ -31,7 +48,7 @@ export const frontend = {
   build: async (
     arg: BuilderArg & { logs?: (log: string) => string | void }
   ) => {
-    await runBundler({
+    await bundleMako({
       ...arg,
       watch: false,
       name: `fe~${trim(
