@@ -21,5 +21,5 @@ ${Object.entries(routes)
   .join("\n")}
 };`;
 
-  writeFileSync(dir.path(`frontend:src/generated/pages.ts`), content);
+  writeFileSync(dir.path(`frontend:editor/src/generated/pages.ts`), content);
 };

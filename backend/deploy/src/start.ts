@@ -13,14 +13,14 @@ const main = async () => {
     process.exit(1);
   }
 
-  const basePath = dir.path(`data:code/${site_id}/site/dist/frontend`);
-  const base = `/prod/${site_id}`;
+  const baseDir = dir.path(`data:frontend/base`);
+  const basePath = `/prod/${site_id}`;
   const st = staticFile({
-    basePath,
+    basePath: baseDir,
     indexHtml: (req: Request) => {
       return `\
 <!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body><script src="${base}/index.js"></script></body></html>`;
+<body><script type="module" src="${basePath}/index.js"></script></body></html>`;
     },
   });
 

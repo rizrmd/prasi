@@ -1,11 +1,11 @@
 import { watcher } from "utils/watcher";
-import { g } from "./global";
+import { g } from "../global";
 import chalk from "chalk";
 import { routeWatch } from "prasi/page/route-watch";
 import { frontend } from "utils/src/build/frontend";
 import { dir } from "utils/dir";
 
-export const initDev = () => {
+export const initDev = async () => {
   if (!g.dev) {
     console.log(`Running in ${chalk.blue("DEV")} mode`);
 
@@ -14,9 +14,15 @@ export const initDev = () => {
       console.log("pages changed");
     });
     routeWatch();
-    frontend.dev({
+    await frontend.dev({
+      root: dir.path("frontend:base"),
+      entryfile: dir.path("frontend:base/src/index.tsx"),
+      outdir: dir.path("data:frontend/base"),
+    });
+    await frontend.dev({
+      root: dir.path("frontend:editor"),
       entryfile: dir.path("frontend:editor/src/index.tsx"),
-      outdir: dir.path("data:editor/frontend"),
+      outdir: dir.path("data:frontend/editor"),
     });
   }
 };

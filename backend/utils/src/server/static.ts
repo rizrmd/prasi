@@ -6,7 +6,7 @@ interface StaticHandler {
 }
 
 const generateETag = (stat: { size: number; mtime: Date }): string => {
-  return `"${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}"`;
+  return `${stat.size.toString(16)}-${stat.mtime.getTime().toString(16)}`;
 };
 
 // Serve regular static file
@@ -31,8 +31,7 @@ const serveFile = (filePath: string, req: Request): Response | null => {
   return new Response(file, {
     headers: {
       "Content-Type": file.type,
-      "Cache-Control": "public, max-age=31536000",
-      "ETag": etag,
+      ETag: etag,
     },
   });
 };
@@ -56,7 +55,7 @@ const serveHtml = (content: string, req: Request): Response => {
     headers: {
       "Content-Type": "text/html",
       "Cache-Control": "no-cache",
-      "ETag": etag,
+      ETag: etag,
     },
   });
 };

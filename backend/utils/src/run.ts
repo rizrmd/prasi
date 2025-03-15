@@ -206,7 +206,9 @@ export const run = async (
         if (code === 0) {
           resolve();
         } else {
-          console.error(`Command failed with exit code ${code}`);
+          console.error(
+            `${commandInput}\nCommand failed with exit code ${code}`
+          );
           resolve();
         }
       })
@@ -223,19 +225,19 @@ export const run = async (
       const handler = () => {
         cleanup();
         proc.kill();
-        signalCleanup.forEach(cleanup => cleanup());
+        signalCleanup.forEach((cleanup) => cleanup());
         if (signal === "SIGINT") {
           process.exit(0); // Exit immediately on SIGINT
         }
       };
-      
+
       process.on(signal, handler);
       signalCleanup.add(() => process.off(signal, handler));
     });
 
     // Auto cleanup when process exits
     proc.exited.finally(() => {
-      signalCleanup.forEach(cleanup => cleanup());
+      signalCleanup.forEach((cleanup) => cleanup());
       signalCleanup.clear();
     });
   });

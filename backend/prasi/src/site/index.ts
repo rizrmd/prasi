@@ -106,6 +106,7 @@ export const Site = {
           } catch (e) {}
 
           await frontend.dev({
+            root: dir.path(`data:code/${site.site.id}/site/src`),
             entryfile: dir.path(
               `data:code/${site.site.id}/site/src/${input.frontend}`
             ),
@@ -118,6 +119,7 @@ export const Site = {
         },
         backend: async () => {
           await backend.dev({
+            root: dir.path(`data:code/${site.site.id}/site/src`),
             entryfile: dir.path(
               `data:code/${site.site.id}/site/src/${input.backend}`
             ),

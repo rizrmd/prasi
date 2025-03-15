@@ -1,27 +1,38 @@
+import chalk from "chalk";
 import { argv } from "utils/argv";
 import { routeProd } from "./routes/prod";
-import { initDev } from "./utils/dev";
-import { initServer } from "./utils/init";
 import { g } from "./utils/global";
-import chalk from "chalk";
+import { initServer } from "./utils/init";
+import { initDev } from "./utils/init/dev";
+import { initProd } from "./utils/init/prod";
+import { dir } from "utils/dir";
+import { staticFile } from "utils/server/static";
 
 initServer();
 
 if (argv.has("--dev")) {
   initDev();
+} else {
+  initProd();
 }
 
 let init = false;
 if (!g.server) {
   init = true;
 }
+
+const baseDir = dir.path(`data:frontend/base`);
+const st = staticFile({
+  basePath: baseDir,
+});
+
 g.server = Bun.serve({
   routes: {
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
   },
   fetch(request, server) {
-    return new Response("okedeh");
+    return st.serve(request);
   },
 });
 

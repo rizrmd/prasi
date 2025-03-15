@@ -8,8 +8,12 @@ export const backend = {
       name: `be~${dirname(arg.entryfile).substring(process.cwd().length)}`,
       ...arg,
       external: ["bun"],
+      watch: true,
       config: {
+        ...arg.config,
+        devServer: false,
         platform: "node",
+        hmr: false,
         devtool: "source-map",
         minify: false,
         codeSplitting: false,

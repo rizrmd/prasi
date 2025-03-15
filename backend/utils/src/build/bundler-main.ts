@@ -1,7 +1,8 @@
 import { build, type BuildParams } from "@umijs/mako";
-import { basename, dirname, join } from "path";
+import { join } from "path";
 
 export type BuilderArg = {
+  root: string;
   entryfile: string;
   outdir: string;
   external?: string[];
@@ -11,7 +12,7 @@ export type BuilderArg = {
 
 const bundle = async (arg: BuilderArg) => {
   const tsconfig = {
-    path: join(dirname(arg.entryfile), "tsconfig.json"),
+    path: join(arg.root, "tsconfig.json"),
     exists: false,
     alias: [] as [string, string][],
   };
@@ -31,7 +32,7 @@ const bundle = async (arg: BuilderArg) => {
   }
 
   await build({
-    root: dirname(arg.entryfile),
+    root: arg.root,
     watch: arg.watch || false,
     config: {
       //@ts-ignore
@@ -39,7 +40,7 @@ const bundle = async (arg: BuilderArg) => {
       output: {
         path: arg.outdir,
         mode: "bundle",
-        meta: true,
+        preserveModules: true,
       },
       mode: "production",
       codeSplitting: {
@@ -53,7 +54,7 @@ const bundle = async (arg: BuilderArg) => {
               // The name of the chunk group, currently only string values are supported
               name: "common",
               //（optional）The chunk type that the chunk group contains modules belong to, enum values are "async" (default) | "entry" | "all"
-              allowChunks: "entry",
+              allowChunks: "async",
               //（optional）The minimum number of references to modules contained in the chunk group
               minChunks: 1,
               //（optional）The minimum size of the chunk group to take effect
@@ -77,7 +78,7 @@ const bundle = async (arg: BuilderArg) => {
       devtool: "source-map",
       platform: "browser",
       entry: {
-        index: `./${basename(arg.entryfile)}`,
+        index: arg.entryfile,
       },
       ...(arg.config || {}),
     },
