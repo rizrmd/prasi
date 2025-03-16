@@ -2,7 +2,6 @@ import type { FC } from "react";
 import { router } from "src/site/router";
 import type { DeepReadonly, IItem } from "../logic/types";
 import { ErrorBox } from "../utils/error-box";
-import type { ITEM_ID } from "./script/typings";
 import { ViComponent } from "./vi-component";
 import { viProps } from "./vi-props";
 import { ViScript } from "./vi-script";
@@ -12,16 +11,23 @@ export const ViItem: FC<{
   item: DeepReadonly<IItem>;
   is_layout: boolean;
   paths: ItemPaths;
-}> = ({ item, is_layout, paths }) => {
+  passprop?: { idx: any } & Record<string, any>;
+}> = ({ item, is_layout, paths, passprop }) => {
   viState({ is_layout, item, paths });
   const vi = viRead();
+  if (item.hidden) return null;
 
   if (item.component?.id) {
     const component = router.components?.[item.component.id];
     if (component) {
       return (
         <ErrorBox>
-          <ViComponent item={item} is_layout={is_layout} paths={paths} />
+          <ViComponent
+            item={item}
+            is_layout={is_layout}
+            paths={paths}
+            passprop={passprop}
+          />
         </ErrorBox>
       );
     }
@@ -31,7 +37,7 @@ export const ViItem: FC<{
     if (typeof router.page === "object" && !!router.page) {
       return router.page.childs.map((e, idx) => (
         <ErrorBox key={idx}>
-          <ViItem item={e} is_layout={false} paths={[]} />
+          <ViItem item={e} is_layout={false} paths={[]} passprop={passprop} />
         </ErrorBox>
       ));
     }
@@ -41,10 +47,16 @@ export const ViItem: FC<{
   if (item.adv?.js && item.adv?.jsBuilt) {
     return (
       <ErrorBox>
-        <ViScript item={item} is_layout={is_layout} paths={paths} />
+        <ViScript
+          item={item}
+          is_layout={is_layout}
+          paths={paths}
+          passprop={passprop}
+        />
       </ErrorBox>
     );
   }
+
   const props = viProps(item, { mode: vi.mode });
   if (item.html) {
     return (
@@ -59,6 +71,7 @@ export const ViItem: FC<{
             item={e}
             is_layout={is_layout}
             paths={[...paths, { id: item.id }]}
+            passprop={passprop}
           />
         </ErrorBox>
       ))}

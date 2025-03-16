@@ -86,7 +86,8 @@ const main = async () => {
   console.log(`🚀 Started ${chalk.green(site.id)} ~> http://localhost:${port}`);
 
   process.on("SIGINT", () => {
-    console.log("Shutting down...");
+    g.shutting_down = true;
+    console.log("\nShutting down...");
     process.exit(0);
   });
 };

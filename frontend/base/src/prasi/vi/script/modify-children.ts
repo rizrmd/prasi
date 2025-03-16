@@ -5,19 +5,19 @@ import type { ItemPath, ItemPaths } from "../vi-state";
 export const modifyChildren = (
   children: ReactElement | ReactElement[],
   item: DeepReadonly<IItem>,
-  path: Omit<ItemPath, "id"> | ((child: ReactElement) => Omit<ItemPath, "id">)
+  path: Omit<ItemPath, "id"> | ((child: ReactElement) => void)
 ) => {
   const modifyChild = (child: ReactElement) => {
     const paths = (child.props as any)?.paths as ItemPaths;
     if (Array.isArray(paths)) {
       const last = paths[paths.length - 1];
       if (last && last.id === item.id) {
-        let results = path;
         if (typeof path === "function") {
-          results = path(child);
-        }
-        for (const [k, v] of Object.entries(results)) {
-          (last as any)[k] = v;
+          path(child);
+        } else {
+          for (const [k, v] of Object.entries(path)) {
+            (last as any)[k] = v;
+          }
         }
       }
     }

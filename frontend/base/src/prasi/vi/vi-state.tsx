@@ -47,7 +47,6 @@ export const write = proxy({
   },
   scope: ref({
     local: {} as Record<string, { name: string; value: any }>,
-    passprop: {} as Record<string, Map<any, any>>,
   }),
 });
 

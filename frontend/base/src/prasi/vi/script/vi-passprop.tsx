@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import type { DeepReadonly, IItem } from "src/prasi/logic/types";
-import { write } from "../vi-state";
+import { write, type ItemPaths } from "../vi-state";
 import { modifyChildren } from "./modify-children";
 
 export const viPassProp = ({
@@ -9,25 +9,14 @@ export const viPassProp = ({
   item: DeepReadonly<IItem>;
   is_layout: boolean;
 }) => {
-  return (args: { children: ReactElement }) => {
+  return (args: { children: ReactElement; idx: any }) => {
     const children = args.children;
-    let passprop = write.scope.passprop[item.id];
-
-    if (!passprop) {
-      write.scope.passprop[item.id] = new Map();
-      passprop = write.scope.passprop[item.id];
-    }
 
     return modifyChildren(children, item, (child) => {
-      const props: any = { ...args };
-      const passprop_idx = props.idx || child.key;
-
-      if (passprop) {
-        delete props.children;
-        passprop.set(passprop_idx, props);
-      }
-
-      return { passprop_idx };
+      const child_props = child.props as any;
+      const passprop: any = { ...args };
+      delete passprop.children;
+      child_props.passprop = passprop;
     });
   };
 };

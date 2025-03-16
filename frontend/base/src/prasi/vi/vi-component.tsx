@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import { useEffect, type FC } from "react";
 import { router } from "src/site/router";
 import { ref } from "valtio";
 import type { DeepReadonly, FNCompDef, IItem } from "../logic/types";
@@ -9,26 +9,21 @@ export const ViComponent: FC<{
   item: DeepReadonly<IItem>;
   is_layout: boolean;
   paths: ItemPaths;
-}> = ({ item, is_layout, paths }) => {
+  passprop?: { idx: any } & Record<string, any>;
+}> = ({ item, is_layout, paths, passprop }) => {
   const { instances, write } = viState({ is_layout, item, paths });
   const component = router.components[item.component!.id]!;
 
-  const instantiate = () => {
-    write.instance_id = item.id;
-    const instance_item = structuredClone(component);
+  const instance_id = passprop ? `${item.id}-${passprop.idx}` : item.id;
 
+  const generateProps = () => {
     const props = {} as any;
     const master_props = component.component?.props;
     const scope: any = {
       ...window.prasi_site.exports,
+      ...passprop,
     };
     for (const path of paths) {
-      if (path.passprop_idx) {
-        const passprop = writeScope.passprop[path.id];
-        if (passprop) {
-          Object.assign(scope, passprop.get(path.passprop_idx));
-        }
-      }
       if (path.local) {
         const local = writeScope.local[path.id];
         if (local) {
@@ -42,8 +37,14 @@ export const ViComponent: FC<{
         props[k] = parseProp(k, v, item, paths, scope);
       }
     }
+    return ref(props);
+  };
 
-    instances[item.id] = {
+  const instantiate = () => {
+    write.instance_id = instance_id;
+    const instance_item = structuredClone(component);
+
+    instances[instance_id] = {
       id_component: item.component!.id,
       mappings: ref({
         [component.id]: ref({
@@ -52,22 +53,23 @@ export const ViComponent: FC<{
           childs: instance_item.childs,
         }),
       }),
-      props,
+      props: generateProps(),
       item: instance_item,
     };
-    instances[item.id]!.item.id = item.id;
-    delete instances[item.id]!.item.component;
+    const instance = instances[instance_id]!;
+    instance.item.id = item.id;
+    delete instance.item.component;
   };
 
   if (!write.instance_id && component) {
     instantiate();
   }
 
-  let instance = instances[item.id];
+  let instance = instances[instance_id];
   if (!instance) {
     if (write.instance_id) {
       instantiate();
-      instance = instances[item.id];
+      instance = instances[instance_id];
 
       if (!instance) {
         console.error("instance not found");
@@ -79,7 +81,14 @@ export const ViComponent: FC<{
     }
   }
 
-  return <ViItem item={instance.item} is_layout={is_layout} paths={paths} />;
+  return (
+    <ViItem
+      item={instance.item}
+      is_layout={is_layout}
+      paths={paths}
+      passprop={passprop}
+    />
+  );
 };
 
 const parseProp = (

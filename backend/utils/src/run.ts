@@ -1,5 +1,6 @@
 import { spawn, type Subprocess, type SystemError } from "bun";
 import { dir } from "./dir";
+import { g } from "server/utils/global";
 
 type StdioOption = "inherit" | "pipe" | "ignore";
 type StdioTuple = [StdioOption, StdioOption, StdioOption];
@@ -13,6 +14,44 @@ interface SpawnConfig {
 
 // Track running processes by command
 export const running = new Map<string, Subprocess>();
+
+// Kill all running subprocesses and wait for them to exit
+export const cleanup = async () => {
+  const procs = Array.from(running.values());
+  if (procs.length === 0) return;
+
+  // Kill all running processes
+  procs.forEach((p) => p.kill());
+  // Wait for all processes to exit
+  await Promise.all(procs.map((p) => p.exited));
+  // Clear the running map
+  running.clear();
+};
+
+// Synchronous cleanup for process.exit
+const cleanupSync = () => {
+  const procs = Array.from(running.values());
+  if (procs.length === 0) return;
+
+  // Kill all running processes immediately
+  procs.forEach((p) => p.kill());
+  running.clear();
+};
+
+// Set up process signal handlers
+["SIGTERM", "SIGINT"].forEach((signal) => {
+  process.on(signal, async () => {
+    g.shutting_down = true;
+
+    await cleanup();
+    process.exit(0);
+  });
+});
+
+// Ensure cleanup on normal exit (must be synchronous)
+process.on("exit", () => {
+  cleanupSync();
+});
 
 export const run = async (
   commandInput: string | undefined | null,
@@ -147,15 +186,15 @@ export const run = async (
       return;
     }
 
-    // Ensure process is removed from running on any termination
-    const cleanup = () => {
-      running.delete(validatedCommand);
-    };
-
     if (arg?.started) arg.started(proc);
 
     // Add to running processes
     running.set(validatedCommand, proc);
+
+    // Ensure process is removed from running on termination
+    const cleanup = () => {
+      running.delete(validatedCommand);
+    };
 
     // Handle output based on mode
     if (arg?.mode === "pipe") {
@@ -199,16 +238,18 @@ export const run = async (
       }
     }
 
-    // Handle process completion
+    // Handle process completion and cleanup
     proc.exited
       .then((code: number | null) => {
         cleanup();
         if (code === 0) {
           resolve();
         } else {
-          console.error(
-            `${commandInput}\nCommand failed with exit code ${code}`
-          );
+          if (!g.shutting_down) {
+            console.error(
+              `${commandInput}\nCommand failed with exit code ${code}`
+            );
+          }
           resolve();
         }
       })
@@ -216,29 +257,5 @@ export const run = async (
         cleanup();
         reject(err);
       });
-
-    // Handle process termination
-    const signals = ["exit", "SIGTERM", "SIGINT"] as const;
-    const signalCleanup = new Set<() => void>();
-
-    signals.forEach((signal) => {
-      const handler = () => {
-        cleanup();
-        proc.kill();
-        signalCleanup.forEach((cleanup) => cleanup());
-        if (signal === "SIGINT") {
-          process.exit(0); // Exit immediately on SIGINT
-        }
-      };
-
-      process.on(signal, handler);
-      signalCleanup.add(() => process.off(signal, handler));
-    });
-
-    // Auto cleanup when process exits
-    proc.exited.finally(() => {
-      signalCleanup.forEach((cleanup) => cleanup());
-      signalCleanup.clear();
-    });
   });
 };

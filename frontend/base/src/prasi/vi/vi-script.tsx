@@ -1,4 +1,10 @@
-import { useState, type FC, type ReactNode } from "react";
+import {
+  useState,
+  type FC,
+  type ReactElement,
+  type ReactNode,
+  isValidElement,
+} from "react";
 import { ref } from "valtio";
 import type { DeepReadonly, IItem } from "../logic/types";
 import { viLocal } from "./script/vi-local";
@@ -11,7 +17,8 @@ export const ViScript: FC<{
   item: DeepReadonly<IItem>;
   is_layout: boolean;
   paths: ItemPaths;
-}> = ({ item, is_layout, paths }) => {
+  passprop?: { idx: any } & Record<string, any>;
+}> = ({ item, is_layout, paths, passprop }) => {
   const vi = viRead();
   const render = useState({})[1];
   const { write, all, instances } = viState({ is_layout, item, paths });
@@ -29,14 +36,10 @@ export const ViScript: FC<{
     }
   }
 
-  const scope: any = {};
+  const scope: any = {
+    ...passprop,
+  };
   for (const path of paths) {
-    if (path.passprop_idx) {
-      const passprop = writeScope.passprop[path.id];
-      if (passprop) {
-        Object.assign(scope, passprop.get(path.passprop_idx));
-      }
-    }
     if (path.local) {
       const local = writeScope.local[path.id];
       if (local) {
@@ -54,6 +57,7 @@ export const ViScript: FC<{
               item={e}
               key={key}
               is_layout={is_layout}
+              passprop={passprop}
               paths={[...paths, { id: item.id }]}
             />
           );
@@ -100,6 +104,19 @@ console.error("ERROR [${item.name}]\\n ${printPaths(
   let result = { el: null as ReactNode | null };
   write.jsBuilt!(
     (el) => {
+      traverse(el as any, ({ el, parent }) => {
+        if (el.type === args.PassProp) {
+          if (!el.key) {
+            el.key = parent.key;
+          }
+          const props = el.props as any;
+          if (props.idx) {
+            el.key = props.idx;
+          } else if (el.key) {
+            props.idx = el.key;
+          }
+        }
+      });
       result.el = el;
     },
     ...Object.values(args),
@@ -121,4 +138,48 @@ export const printPaths = (paths: ItemPaths, all: any) => {
       return i.id;
     })
     .join(" › ");
+};
+
+const traverse = (
+  el: ReactElement & { props: { children?: ReactNode | ReactNode[] } },
+  visitor: (arg: {
+    el: ReactElement;
+    parent: ReactElement<{ children: ReactNode | ReactNode[] }>;
+  }) => void
+) => {
+  function visit(
+    element: ReactElement & { props: { children?: ReactNode | ReactNode[] } },
+    parent: ReactElement | null
+  ) {
+    if (!isValidElement(element)) return;
+
+    if (parent) {
+      visitor({ el: element, parent: parent as any });
+    }
+
+    const children = element.props.children;
+    if (children) {
+      if (Array.isArray(children)) {
+        children.forEach((child) => {
+          if (isValidElement(child)) {
+            visit(
+              child as ReactElement & {
+                props: { children?: ReactNode | ReactNode[] };
+              },
+              element
+            );
+          }
+        });
+      } else if (isValidElement(children)) {
+        visit(
+          children as ReactElement & {
+            props: { children?: ReactNode | ReactNode[] };
+          },
+          element
+        );
+      }
+    }
+  }
+
+  visit(el, null);
 };
