@@ -4,8 +4,9 @@ import { argv } from "utils/src/argv";
 import { g } from "./global";
 import { site } from "./site";
 import { staticInfo } from "./static";
-import { prasiDB } from "./prasi/db";
+import { prasiDB } from "./prasi/db-remote";
 import chalk from "chalk";
+import { proxy } from "./prasi/proxy";
 
 const main = async () => {
   const port = argv.get("--port");
@@ -53,6 +54,9 @@ const main = async () => {
   const http = g.backend?.server?.http.bind(g.backend.server);
   g.server = Bun.serve({
     port,
+    routes: {
+      "/_proxy/*": proxy,
+    },
     async fetch(req) {
       const handle = async function (req: Request, opt?: any) {
         const static_public = staticPublic.serve(req);

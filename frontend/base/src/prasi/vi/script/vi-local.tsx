@@ -5,10 +5,10 @@ import { writeScope } from "../vi-state";
 
 export const viLocal = ({
   item,
-  is_layout,
+  render,
 }: {
   item: DeepReadonly<IItem>;
-  is_layout: boolean;
+  render: () => void;
 }) => {
   return <T,>({
     value,
@@ -27,10 +27,7 @@ export const viLocal = ({
       const local = useRef(value).current as unknown as T & {
         render: () => void;
       };
-      const render = useState({})[1];
-      local.render = () => {
-        render({});
-      };
+      local.render = render;
       writeScope.local[item.id] = { name, value: local };
       useEffect(() => {
         effect?.(local);

@@ -1,4 +1,4 @@
-import { type FC, type ReactNode } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { ref } from "valtio";
 import type { DeepReadonly, IItem } from "../logic/types";
 import { viLocal } from "./script/vi-local";
@@ -13,6 +13,7 @@ export const ViScript: FC<{
   paths: ItemPaths;
 }> = ({ item, is_layout, paths }) => {
   const vi = viRead();
+  const render = useState({})[1];
   const { write, all, instances } = viState({ is_layout, item, paths });
   const jsBuilt = item.adv?.jsBuilt!;
 
@@ -90,7 +91,7 @@ console.error("ERROR [${item.name}]\\n ${printPaths(
 
       return null;
     }
-    write.Local = viLocal({ item, is_layout });
+    write.Local = viLocal({ item, render: () => render({}) });
     write.PassProp = viPassProp({ item, is_layout });
     args.Local = write.Local;
     args.PassProp = write.PassProp;

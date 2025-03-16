@@ -1,8 +1,7 @@
 import type { ReactElement } from "react";
 import type { DeepReadonly, IItem } from "src/prasi/logic/types";
-import { modifyChildren } from "./modify-children";
-import { ViItem } from "../vi-item";
 import { write } from "../vi-state";
+import { modifyChildren } from "./modify-children";
 
 export const viPassProp = ({
   item,
@@ -13,6 +12,7 @@ export const viPassProp = ({
   return (args: { children: ReactElement }) => {
     const children = args.children;
     let passprop = write.scope.passprop[item.id];
+
     if (!passprop) {
       write.scope.passprop[item.id] = new Map();
       passprop = write.scope.passprop[item.id];
