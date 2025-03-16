@@ -1,13 +1,12 @@
-import type { Subprocess } from "bun";
+import { type ServerWebSocket, type Subprocess } from "bun";
 import { db, type site as DBSite } from "db/use";
+import { rimraf } from "rimraf";
 import { backend } from "utils/build/backend";
-import { bundleBun } from "utils/build/bundler-bun";
+import { bundleEsbuild } from "utils/build/bundler-esbuild";
 import { dir } from "utils/dir";
 import { getFreePort } from "utils/port";
 import { run } from "utils/run";
 import { loadGitRepo } from "./git-repo";
-import { rimraf } from "rimraf";
-import { bundleEsbuild } from "utils/build/bundler-esbuild";
 export const Site = {
   loaded: {} as Record<
     string,
@@ -26,6 +25,15 @@ export const Site = {
     }
   >,
   loading: {} as Record<string, { status: string; promise: Promise<DBSite> }>,
+  ws_waiting: {} as Record<string, Set<ServerWebSocket<{ url: URL }>>>,
+  ws_broadcast(site_id: string, msg: string) {
+    const conns = this.ws_waiting[site_id];
+    if (conns) {
+      conns.forEach((ws) => {
+        ws.send(msg);
+      });
+    }
+  },
   check(site_id: string) {
     if (this.loaded[site_id] && !this.loading[site_id]) {
       return this.loaded[site_id];
@@ -45,10 +53,13 @@ export const Site = {
       status: "Initializing Site " + site_id,
       promise: null as any,
     };
+    this.ws_broadcast(site_id, this.loading[site_id].status);
 
     const res = await db.site.findFirst({ where: { id: site_id } });
     if (res) {
       this.loading[site_id].status = "Loading git repo";
+      this.ws_broadcast(site_id, this.loading[site_id].status);
+
       this.loading[site_id].promise = new Promise<DBSite>(async (resolve) => {
         const loading = this.loading[site_id];
         if (res.git_repo && loading) {
@@ -60,6 +71,7 @@ export const Site = {
       await this.loading[site_id].promise;
       const port = await getFreePort();
       this.loading[site_id].status = "Waiting site server on port " + port;
+      this.ws_broadcast(site_id, this.loading[site_id].status);
 
       this.loaded[site_id] = {
         site: res,
@@ -76,6 +88,8 @@ export const Site = {
       };
       await this.startWatch(site_id);
       await this.startServer(site_id, (res.config as any).api_url, port);
+      this.ws_broadcast(site_id, "Done");
+
       return this.loaded[site_id];
     }
   },
@@ -147,6 +161,7 @@ export const Site = {
         )} --port=${port} --id=${site_id} --url=${site_url}`,
         {
           mode: "pipe",
+          cwd: dir.path(`data:code/${site_id}/site/dist/backend`),
           pipe: (output) => {
             process.stdout.write(output);
             if (output.includes("🚀") && !resolved) {

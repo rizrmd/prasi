@@ -19,7 +19,6 @@ export const produceCSS = (
 ): string => {
   try {
     return cx([
-      item.id ? `s-${item.id}` : "",
       css`
         display: flex;
         position: relative;

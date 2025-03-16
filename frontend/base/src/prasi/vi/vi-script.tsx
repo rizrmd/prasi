@@ -1,12 +1,11 @@
 import { type FC, type ReactNode } from "react";
 import { ref } from "valtio";
 import type { DeepReadonly, IItem } from "../logic/types";
+import { viLocal } from "./script/vi-local";
+import { viPassProp } from "./script/vi-passprop";
 import { ViItem } from "./vi-item";
 import { viProps } from "./vi-props";
 import { viRead, viState, writeScope, type ItemPaths } from "./vi-state";
-import { viLocal } from "./script/vi-local";
-import { viPassProp } from "./script/vi-passprop";
-import type { ITEM_ID } from "./script/typings";
 
 export const ViScript: FC<{
   item: DeepReadonly<IItem>;
@@ -18,9 +17,15 @@ export const ViScript: FC<{
   const jsBuilt = item.adv?.jsBuilt!;
 
   const instance = write.instance_id ? instances[write.instance_id] : null;
-  const component_props = {};
+  const component_props: any = {};
   if (instance) {
     Object.assign(component_props, instance.props);
+    for (const [k, v] of Object.entries(component_props)) {
+      if (v && (v as any).__jsx) {
+        const Component = (v as any).__Component;
+        component_props[k] = <Component is_layout={is_layout} />;
+      }
+    }
   }
 
   const scope: any = {};

@@ -21,10 +21,11 @@ declare global {
     cn: typeof import_cx;
     db: ReturnType<typeof import_dbInstance>;
     preload: typeof import_navigate.preload;
+    siteurl: typeof import_navigate.siteurl;
     preloaded: typeof import_navigate.preloaded;
     prasi_site: {
       id: string;
-      serverurl: string;
+      siteurl: string;
       baseurl: string;
       exports: Record<string, any>;
       urls: { pages: string; layout: string; page: string };
@@ -38,6 +39,7 @@ declare global {
   const cx = import_cx;
   const db = import_dbInstance();
   const baseurl = import_navigate.baseurl;
+  const siteurl = import_navigate.siteurl;
   const preload = import_navigate.preload;
   const preloaded = import_navigate.preloaded;
   const siteReady = (rootElement: ReactTypes.ReactComp) => {};

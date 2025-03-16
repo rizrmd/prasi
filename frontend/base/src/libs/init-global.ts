@@ -21,6 +21,7 @@ export const initGlobal = (siteReady: typeof window.siteReady) => {
   window.db = dbInstance();
   window.navigate = import_navigate.navigate;
   window.baseurl = import_navigate.baseurl;
+  window.siteurl = import_navigate.siteurl;
   window.preload = import_navigate.preload;
   window.preloaded = import_navigate.preloaded;
 };

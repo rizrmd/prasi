@@ -24,7 +24,7 @@ const main = async () => {
 
   site.id = site_id;
   site.url = site_url;
-  const sinfo = staticInfo(site_id);
+  const sinfo = staticInfo(site_id, site_url);
   const staticBase = staticFile({
     baseDir: sinfo.js_base,
     indexHtml: sinfo.index_html,

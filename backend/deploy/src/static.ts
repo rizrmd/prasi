@@ -2,7 +2,7 @@ import { argv } from "utils/argv";
 import { dir } from "utils/dir";
 import { prasiUrls } from "./prasi/urls";
 
-export const staticInfo = (site_id: string) => {
+export const staticInfo = (site_id: string, site_url: string) => {
   const standalone = argv.get("--standalone") ? true : false;
 
   const urls = prasiUrls(site_id);
@@ -26,7 +26,7 @@ export const staticInfo = (site_id: string) => {
       <body>
         <script type="module" src="/js/base/index.js"></script>
         <script type="module">
-          initSite(${JSON.stringify({ site_id, urls })});
+          initSite(${JSON.stringify({ site_id, urls, site_url })});
         </script>
       </body>
     </html>

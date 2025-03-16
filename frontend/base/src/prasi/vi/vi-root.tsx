@@ -1,7 +1,9 @@
 import { router } from "src/site/router";
 import { ViItem } from "./vi-item";
+import type { FC } from "react";
+import { write } from "./vi-state";
 
-export const ViRoot = () => {
+export const ViRoot: FC<{}> = ({}) => {
   const layout = router.layout;
 
   const layout_childs = layout?.childs;

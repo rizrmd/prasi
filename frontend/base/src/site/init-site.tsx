@@ -4,11 +4,12 @@ import type { IItem } from "src/prasi/logic/types";
 
 export const initSite = async (opt: {
   site_id: string;
+  site_url: string;
   urls: (typeof window.prasi_site)["urls"];
 }) => {
   window.prasi_site = {
     id: opt.site_id,
-    serverurl: "",
+    siteurl: opt.site_url,
     baseurl: `/prod/${opt.site_id}`,
     exports: {},
     urls: opt.urls,

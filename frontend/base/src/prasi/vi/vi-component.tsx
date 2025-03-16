@@ -39,7 +39,7 @@ export const ViComponent: FC<{
 
     if (master_props) {
       for (const [k, v] of Object.entries(master_props)) {
-        props[k] = parseProp(k, v, item, scope);
+        props[k] = parseProp(k, v, item, paths, scope);
       }
     }
 
@@ -86,12 +86,29 @@ const parseProp = (
   k: string,
   master_prop: FNCompDef,
   item: DeepReadonly<IItem>,
+  paths: ItemPaths,
   scope: any
 ) => {
+  const prop = item.component!.props[k]!;
   if (master_prop.meta?.type === "content-element") {
-    return <>moka</>;
+    const content = prop.content;
+    if (content) {
+      return {
+        __jsx: true,
+        __Component: ({ is_layout }: { is_layout: boolean }) => {
+          return (
+            <ViItem
+              is_layout={is_layout}
+              item={content}
+              paths={[...paths, { id: content.id }]}
+            />
+          );
+        },
+      };
+    }
+    return null;
   } else {
-    let js = item.component!.props[k]!.valueBuilt || "";
+    let js = prop.valueBuilt || "";
     if (js.startsWith(`const _jsxFileName = "";`)) {
       js = `(() => { ${js.replace(
         `const _jsxFileName = "";`,

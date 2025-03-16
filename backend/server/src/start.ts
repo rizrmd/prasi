@@ -11,6 +11,12 @@ import { routePrasiLayout } from "./routes/prasi/layout";
 import { routePrasiPages } from "./routes/prasi/pages";
 import { routePrasiInfo } from "./routes/prasi/info";
 import { routePrasiPage } from "./routes/prasi/page";
+import type {
+  ServerWebSocket,
+  WebSocketHandler,
+  WebSocketServeOptions,
+} from "bun";
+import { Site } from "prasi/site";
 
 initServer();
 
@@ -55,6 +61,7 @@ const jsEditor = staticFile({
 });
 
 g.server = Bun.serve({
+  port: 4550,
   routes: {
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
@@ -63,14 +70,46 @@ g.server = Bun.serve({
     "/_prasi/:site_id/page/:page_id": routePrasiPage,
     "/_prasi/:site_id/info": routePrasiInfo,
   },
-  fetch(request) {
+  websocket: {
+    open(ws) {
+      const pathname = ws.data.url.pathname;
+      if (pathname.startsWith("/_prasi/") && pathname.endsWith("/loading")) {
+        const site_id = pathname.split("/")[2];
+        if (site_id) {
+          if (!Site.ws_waiting[site_id]) {
+            Site.ws_waiting[site_id] = new Set();
+          }
+
+          Site.ws_waiting[site_id].add(ws);
+        }
+      }
+    },
+    async message(ws, message) {},
+    close(ws, code, reason) {
+      const pathname = ws.data.url.pathname;
+      if (pathname.startsWith("/_prasi/") && pathname.endsWith("/loading")) {
+        const site_id = pathname.split("/")[2];
+        if (site_id) {
+          if (!Site.ws_waiting[site_id]) {
+            Site.ws_waiting[site_id] = new Set();
+          }
+          Site.ws_waiting[site_id].delete(ws);
+        }
+      }
+    },
+  },
+  fetch(request, server) {
+    if (server.upgrade(request, { data: { url: new URL(request.url) } })) {
+      return new Response(null, { status: 101 });
+    }
+
     const editorResult = jsEditor.serve(request);
     if (editorResult.status !== 404) {
       return editorResult;
     }
     return jsBase.serve(request);
   },
-});
+} as WebSocketServeOptions<{ url: URL }>);
 
 if (init) {
   console.log(

@@ -1,11 +1,15 @@
 import { Suspense, type FC } from "react";
-import type { Router } from "src/site/router";
+import { router, type Router } from "src/site/router";
 import { ErrorBox } from "./utils/error-box";
 import { ViRoot } from "./vi/vi-root";
-import { viRead } from "./vi/vi-state";
+import { viRead, write } from "./vi/vi-state";
 
 export const PrasiRoot: FC<{ router: Router }> = () => {
   const vi = viRead();
+
+  if (write.mode !== router.page!.responsive) {
+    write.mode = router.page!.responsive;
+  }
 
   return (
     <ErrorBox>

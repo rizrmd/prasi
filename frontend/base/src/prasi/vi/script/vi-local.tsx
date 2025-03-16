@@ -28,8 +28,9 @@ export const viLocal = ({
         render: () => void;
       };
       const render = useState({})[1];
-      local.render = () => render({});
-
+      local.render = () => {
+        render({});
+      };
       writeScope.local[item.id] = { name, value: local };
       useEffect(() => {
         effect?.(local);

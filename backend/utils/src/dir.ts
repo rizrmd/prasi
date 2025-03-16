@@ -2,6 +2,7 @@ import { resolve } from "path";
 import * as fs from "fs";
 import * as Path from "path";
 
+const cwd = Path.resolve(import.meta.dir, "../../..");
 export const dir = {
   path: (input: string) => {
     const paths = {
@@ -15,12 +16,12 @@ export const dir = {
       if (input.startsWith(prefix)) {
         // Remove the prefix and resolve the remaining path
         const relativePath = input.slice(prefix.length);
-        return resolve(process.cwd(), path, relativePath);
+        return resolve(cwd, path, relativePath);
       }
     }
 
     // If no prefix matches, return the original input resolved from current directory
-    return resolve(process.cwd(), input);
+    return resolve(cwd, input);
   },
   exists: (path: string) => {
     const fullPath = dir.path(path);
