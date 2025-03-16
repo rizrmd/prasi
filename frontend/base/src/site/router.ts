@@ -16,6 +16,7 @@ export type PageContent = {
 export const createRouter = () => ({
   routes: [] as RouteEntry[],
   current: null as null | RouteMatch,
+  components: {} as Record<string, IItem>,
   pages: {} as Record<string, PageContent>,
   get page() {
     const page_id = this.current?.page.id;

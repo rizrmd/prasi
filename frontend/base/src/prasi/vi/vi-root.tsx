@@ -7,7 +7,7 @@ export const ViRoot = () => {
   const layout_childs = layout?.childs;
   if (layout_childs) {
     return layout_childs.map((item) => (
-      <ViItem key={item.id} item={item} is_layout={true} />
+      <ViItem key={item.id} item={item} is_layout={true} paths={[]} />
     ));
   }
 

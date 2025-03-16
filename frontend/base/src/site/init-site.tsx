@@ -1,5 +1,6 @@
 import { PrasiRoot } from "src/prasi/root";
 import { router, type PageContent, type PageRoute } from "./router";
+import type { IItem } from "src/prasi/logic/types";
 
 export const initSite = async (opt: {
   site_id: string;
@@ -27,13 +28,19 @@ export const initSite = async (opt: {
   window.prasi_site.exports = exports;
   const { pages, current } = (await pages_res.json()) as {
     pages: PageRoute[];
-    current: { page: PageRoute; params: any; content_tree: PageContent };
+    current: {
+      page: PageRoute;
+      params: any;
+      content_tree: PageContent;
+      components: Record<string, IItem>;
+    };
   };
   router.init(pages);
   router.layout = await layout.json();
   if (current) {
     router.current = { page: current.page, params: current.params };
     router.pages[current.page.id] = current.content_tree;
+    router.components = current.components;
   }
   window.siteReady(<PrasiRoot router={router} />);
 };

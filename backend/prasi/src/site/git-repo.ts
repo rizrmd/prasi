@@ -10,13 +10,19 @@ export const loadGitRepo = async (site: site, loading: { status: string }) => {
   }
   if (!dir.exists(`${prefix}/node_modules`)) {
     loading.status = "Installing dependencies";
-    await $`bun i`.cwd(dir.path(`${prefix}`)).quiet();
-    await $`bun pm trust --all`.cwd(dir.path(`${prefix}`)).quiet();
+    try {
+      await $`bun i`.cwd(dir.path(`${prefix}`)).quiet();
+      await $`bun pm trust --all`.cwd(dir.path(`${prefix}`)).quiet();
+    } catch (e) {
+      loading.status = `Error installing dependencies: ${e}`;
+    }
   }
 
   if (dir.exists(`${prefix}/lib`) && dir.list(`${prefix}/lib`).length === 0) {
     loading.status = "Cloning lib";
-    await $`git clone https://github.com/avolut/prasi-lib ${dir.path(`${prefix}/lib`)} --depth=2`
+    await $`git clone https://github.com/avolut/prasi-lib ${dir.path(
+      `${prefix}/lib`
+    )} --depth=2`
       .cwd(dir.path(`${prefix}`))
       .quiet();
   }

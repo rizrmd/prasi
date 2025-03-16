@@ -9,6 +9,7 @@ import { cx as import_cx } from "./cx";
 declare global {
   interface Window {
     React: typeof ReactTypes;
+    Fragment: typeof ReactTypes.Fragment;
     ReactDOM: typeof ReactDomTypes;
     JSXRuntime: typeof ReactJSX;
     JSXDevRuntime: typeof ReactJSXDev;
@@ -18,6 +19,9 @@ declare global {
     css: typeof import_css;
     cx: typeof import_cx;
     cn: typeof import_cx;
+    db: ReturnType<typeof import_dbInstance>;
+    preload: typeof import_navigate.preload;
+    preloaded: typeof import_navigate.preloaded;
     prasi_site: {
       id: string;
       serverurl: string;
@@ -32,6 +36,11 @@ declare global {
   const css = import_css;
   const cn = import_cx;
   const cx = import_cx;
+  const db = import_dbInstance();
+  const baseurl = import_navigate.baseurl;
+  const preload = import_navigate.preload;
+  const preloaded = import_navigate.preloaded;
+  const siteReady = (rootElement: ReactTypes.ReactComp) => {};
 }
 
 export {};
