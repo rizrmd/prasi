@@ -1,6 +1,5 @@
 import type { WebSocketServeOptions } from "bun";
 import chalk from "chalk";
-import { Site } from "prasi/site";
 import { argv } from "utils/argv";
 import { dir } from "utils/dir";
 import { staticFile } from "utils/server/static";
@@ -15,7 +14,6 @@ import { g } from "./utils/global";
 import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
-import { wsSiteLoading } from "./ws/site-loading";
 import { wsRouter } from "./ws";
 
 initServer();
