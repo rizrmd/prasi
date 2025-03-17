@@ -9,7 +9,9 @@ export const PrasiRoot: FC<{ router: Router }> = () => {
   const render = useState({})[1];
   router.render = () => {
     setTimeout(() => {
-      render({});
+      if (window.viWrite) {
+        render({});
+      }
     });
   };
 

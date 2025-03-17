@@ -4,6 +4,7 @@ import { dirname } from "path";
 import trim from "lodash/trim";
 import type { BuildParams } from "@umijs/mako";
 import { run } from "utils/run";
+import { dir } from "utils/dir";
 
 const config: BuildParams["config"] = {
   platform: "browser",
@@ -20,17 +21,27 @@ export const frontend = {
     mode: "dev" | "prod";
   }) => {
     if (arg.mode === "dev") {
-      run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -w -m`, {
-        mode: "silent",
-        cwd: arg.root,
-        stdin: "inherit",
-      });
+      run(
+        `bun run --silent ${dir.path("root:node_modules/.bin/tailwindcss")} -i ${
+          arg.input
+        } -o ${arg.output} -w -m`,
+        {
+          mode: "silent",
+          cwd: arg.root,
+          stdin: "inherit",
+        }
+      );
     } else {
-      await run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -m`, {
-        mode: "silent",
-        cwd: arg.root,
-        stdin: "inherit",
-      });
+      await run(
+        `bun run --silent ${dir.path("root:node_modules/.bin/tailwindcss")} -i ${
+          arg.input
+        } -o ${arg.output} -m`,
+        {
+          mode: "silent",
+          cwd: arg.root,
+          stdin: "inherit",
+        }
+      );
     }
   },
   dev: async (arg: BuilderArg & { logs?: (log: string) => string | void }) => {

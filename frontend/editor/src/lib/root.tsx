@@ -9,5 +9,5 @@ export const EditorRoot = () => {
   const render = useState({})[1];
   root.render = () => render({});
 
-  return <div className="bg-amber-200 flex-1">{root.page}</div>;
+  return <div className="bg-blue-200 flex-1">{root.page}</div>;
 };

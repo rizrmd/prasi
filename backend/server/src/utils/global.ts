@@ -6,4 +6,5 @@ export const g = global as unknown as {
   db: PrismaEnhanced;
   server: Server;
   shutting_down: boolean;
+  exit_hook: boolean;
 };

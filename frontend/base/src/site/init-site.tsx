@@ -74,7 +74,6 @@ export const initSite = async (opt: {
     router.pages[current.page.id] = current.content_tree;
     router.components = current.components;
     window.params = current.params;
-    window.viWrite = createViWrite();
 
     subscribe(router.componentPendingRender, async (op) => {
       if (op.find((e) => e[0] === "set")) {
@@ -90,5 +89,6 @@ export const initSite = async (opt: {
       }
     });
   }
+  window.viWrite = createViWrite();
   window.siteReady(<PrasiRoot router={router} />);
 };

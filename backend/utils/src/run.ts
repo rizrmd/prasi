@@ -38,20 +38,24 @@ const cleanupSync = () => {
   running.clear();
 };
 
-// Set up process signal handlers
-["SIGTERM", "SIGINT"].forEach((signal) => {
-  process.on(signal, async () => {
-    g.shutting_down = true;
+if (!g.exit_hook) {
+  g.exit_hook = true;
 
-    await cleanup();
-    process.exit(0);
+  // Set up process signal handlers
+  ["SIGTERM", "SIGINT"].forEach((signal) => {
+    process.on(signal, async () => {
+      g.shutting_down = true;
+
+      await cleanup();
+      process.exit(0);
+    });
   });
-});
 
-// Ensure cleanup on normal exit (must be synchronous)
-process.on("exit", () => {
-  cleanupSync();
-});
+  // Ensure cleanup on normal exit (must be synchronous)
+  process.on("exit", () => {
+    cleanupSync();
+  });
+}
 
 export const run = async (
   commandInput: string | undefined | null,

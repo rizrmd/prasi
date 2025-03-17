@@ -9,6 +9,7 @@ export const dir = {
       "data:": "../data",
       "frontend:": "./frontend",
       "backend:": "./backend",
+      "root:": "./",
     };
 
     // Check if input starts with any of the defined prefixes
