@@ -1,4 +1,4 @@
-import { proxy } from "valtio";
+import { proxy, subscribe } from "valtio";
 import { bind } from "valtio-yjs";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
@@ -9,29 +9,35 @@ export type DeepReadonly<T> = T extends Function
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T;
 
-export type CRDT<T extends Record<string, unknown> | unknown[]> = {
+export type CRDT<T extends Record<string, unknown>> = {
   write: T;
   destroy: () => void;
+  undoManager: Y.UndoManager;
 };
 
-export const connectCRDT = <T extends Record<string, unknown> | unknown[]>({
-  path,
-  map,
-  room,
+export const connectCRDT = <T extends Record<string, unknown>>({
+  type,
+  id,
+  render,
 }: {
-  path: string;
-  map: string;
-  room: string;
+  type: string;
+  id: string;
+  render: () => void;
 }) => {
   const ydoc = new Y.Doc();
 
   const url = new URL(location.href);
   url.protocol = url.protocol.replace("http", "ws");
-  url.pathname = path;
-  const ws = new WebsocketProvider(path, room, ydoc);
-  const ymap = ydoc.getMap(map);
+  url.pathname = `/_crdt`;
+
+  const ws = new WebsocketProvider(url.toString(), `${type}/${id}`, ydoc);
+  const ymap = ydoc.getMap("entry");
   const write = proxy({}) as T;
   bind(write, ymap);
+
+  subscribe(write, () => {
+    render();
+  });
   const destroy = () => {
     ws.disconnect();
     ydoc.destroy();

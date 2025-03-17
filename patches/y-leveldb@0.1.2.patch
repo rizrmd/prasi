@@ -1,0 +1,14 @@
+diff --git a/package.json b/package.json
+index f515e819a3e322cb23df89330312282f706454d5..e804a7fa527a646dadd60164ae8fcafaccfb7899 100644
+--- a/package.json
++++ b/package.json
+@@ -34,7 +34,8 @@
+     "./package.json": "./package.json",
+     ".": {
+       "import": "./src/y-leveldb.js",
+-      "require": "./dist/y-leveldb.cjs"
++      "require": "./dist/y-leveldb.cjs",
++      "types": "./dist/src/y-leveldb.d.ts"
+     }
+   },
+   "repository": {

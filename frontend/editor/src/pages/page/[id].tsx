@@ -5,26 +5,63 @@ import { useEffect, useRef, useState } from "react";
 
 export default () => {
   const ref = useRef({
-    crdt: null as CRDT<{ mantap: string }> | null,
+    crdt: null as CRDT<{ A: string }> | null,
   }).current;
   const render = useState({})[1];
 
   useEffect(() => {
     ref.crdt = connectCRDT({
-      path: "/crdt/page/" + params.id,
-      map: "entry",
-      room: "page-" + params.id,
+      type: "page",
+      id: params.id,
+      render: () => {
+        render({});
+      },
     });
+
     render({});
   }, []);
+
+  const crdt = ref.crdt;
+  if (!crdt) return null;
 
   return (
     <div className="p-5 flex flex-col space-y-2 items-start">
       <Button href="/">Back</Button>
-      <Button href={`/site/${Date.now()}`}>
-        makopang{JSON.stringify(window.params)}
-      </Button>
-      <DataTable data={[{ id: "123" }]} />
+      <div className="flex space-x-2">
+        <Button
+          onClick={() => {
+            crdt.write.A = "MANTAP";
+          }}
+        >
+          Set A
+        </Button>
+        <Button
+          onClick={() => {
+            crdt.write.A = new Date().toISOString();
+          }}
+        >
+          Set Date
+        </Button>
+
+        <Button
+          onClick={() => {
+            crdt.undoManager.undo();
+          }}
+          disabled={crdt.undoManager.canUndo()}
+        >
+          Undo
+        </Button>
+
+        <Button
+          onClick={() => {
+            crdt.undoManager.redo();
+          }}
+          disabled={crdt.undoManager.canRedo()}
+        >
+          Redo
+        </Button>
+      </div>
+      {JSON.stringify(crdt.write)}
     </div>
   );
 };

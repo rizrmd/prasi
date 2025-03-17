@@ -6,12 +6,13 @@ export const acceptWS = (params: { route: string } & Record<string, any>) => {
     g.server.upgrade(req, {
       data: {
         ...((req as any).params || {}),
-        route: "site-loading",
+        route: params.route,
+        url: req.url,
       },
     });
   };
 };
 
 export type WSHandler = WebSocketHandler<
-  { route: string } & Record<string, any>
+  { route: string; url: string } & Record<string, any>
 >;

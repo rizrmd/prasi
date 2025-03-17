@@ -1,0 +1,426 @@
+import * as Y from "yjs";
+import * as syncProtocol from "y-protocols/sync";
+import * as awarenessProtocol from "y-protocols/awareness";
+
+import * as encoding from "lib0/encoding"; 
+import * as decoding from "lib0/decoding";
+import * as map from "lib0/map";
+import { LeveldbPersistence } from "y-leveldb";
+
+import debounce from "lodash.debounce";
+import type { WSHandler } from "server/utils/accept-ws";
+import type { ServerWebSocket } from "bun";
+import { dir } from "utils/dir";
+import type { WebSocketData } from "./typings";
+
+const CALLBACK_DEBOUNCE_WAIT = parseInt(
+  process.env.CALLBACK_DEBOUNCE_WAIT || "2000"
+);
+const CALLBACK_DEBOUNCE_MAXWAIT = parseInt(
+  process.env.CALLBACK_DEBOUNCE_MAXWAIT || "10000"
+);
+
+const wsReadyStateConnecting = 0;
+const wsReadyStateOpen = 1;
+const wsReadyStateClosing = 2; // eslint-disable-line
+const wsReadyStateClosed = 3; // eslint-disable-line
+
+type CallbackFn = (update: Uint8Array, origin: any, doc: Y.Doc) => void;
+let callbackHandler: CallbackFn | null = null;
+let isCallbackSet = false;
+
+/**
+ * Set a callback that is called whenever the document is updated.
+ * @param {CallbackFn} callback
+ */
+export const setCallback = (callback: CallbackFn | null): void => {
+  callbackHandler = callback;
+  isCallbackSet = callback !== null;
+};
+
+// disable gc when using snapshots!
+const gcEnabled = true;
+const persistenceDir = dir.path("data:cache/yjs");
+dir.ensure("data:cache/yjs");
+
+interface PersistenceProvider {
+  bindState: (docName: string, ydoc: WSSharedDoc) => Promise<void>;
+  writeState: (docName: string, ydoc: WSSharedDoc) => Promise<any>;
+  provider: any;
+}
+
+/**
+ * @type {PersistenceProvider|null}
+ */
+let persistence: PersistenceProvider | null = null;
+
+if (typeof persistenceDir === "string") {
+  const ldb = new LeveldbPersistence(persistenceDir);
+  persistence = {
+    provider: ldb,
+    bindState: async (docName: string, ydoc: WSSharedDoc) => {
+      const persistedYdoc = await ldb.getYDoc(docName);
+      const newUpdates = Y.encodeStateAsUpdate(ydoc);
+      ldb.storeUpdate(docName, newUpdates);
+      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(persistedYdoc));
+      ydoc.on("update", (update: Uint8Array) => {
+        ldb.storeUpdate(docName, update);
+      });
+    },
+    writeState: async (_docName: string, _ydoc: WSSharedDoc) => {},
+  };
+}
+
+/**
+ * @param {PersistenceProvider|null} persistence_
+ */
+export const setPersistence = (
+  persistence_: PersistenceProvider | null
+): void => {
+  persistence = persistence_;
+};
+
+/**
+ * @return {PersistenceProvider|null} used persistence layer
+ */
+export const getPersistence = (): PersistenceProvider | null => persistence;
+
+/**
+ * @type {Map<string, WSSharedDoc>}
+ */
+const docs = new Map<string, WSSharedDoc>();
+// exporting docs so that others can use it
+export { docs };
+
+// Map to associate WebSocket connections with document names
+const wsToDocMap = new Map<ServerWebSocket<any>, string>();
+
+const messageSync = 0;
+const messageAwareness = 1;
+// const messageAuth = 2
+
+/**
+ * @param {Uint8Array} update
+ * @param {any} _origin
+ * @param {WSSharedDoc} doc
+ * @param {any} _tr
+ */
+const updateHandler = (
+  update: Uint8Array,
+  _origin: any,
+  doc: WSSharedDoc,
+  _tr: any
+): void => {
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, messageSync);
+  syncProtocol.writeUpdate(encoder, update);
+  const message = encoding.toUint8Array(encoder);
+  doc.conns.forEach((_, conn) => send(doc, conn, message));
+};
+
+/**
+ * @type {(ydoc: Y.Doc) => Promise<void>}
+ */
+let contentInitializor: (ydoc: Y.Doc) => Promise<void> = (_ydoc: Y.Doc) =>
+  Promise.resolve();
+
+/**
+ * This function is called once every time a Yjs document is created. You can
+ * use it to pull data from an external source or initialize content.
+ *
+ * @param {(ydoc: Y.Doc) => Promise<void>} f
+ */
+export const setContentInitializor = (
+  f: (ydoc: Y.Doc) => Promise<void>
+): void => {
+  contentInitializor = f;
+};
+
+export class WSSharedDoc extends Y.Doc {
+  name: string;
+  conns: Map<ServerWebSocket<any>, Set<number>>;
+  awareness: awarenessProtocol.Awareness;
+  whenInitialized: Promise<void>;
+  declare gc: boolean;
+
+  /**
+   * @param {string} name
+   */
+  constructor(name: string) {
+    super({ gc: gcEnabled });
+    this.name = name;
+    /**
+     * Maps from conn to set of controlled user ids. Delete all user ids from awareness when this conn is closed
+     * @type {Map<ServerWebSocket, Set<number>>}
+     */
+    this.conns = new Map<ServerWebSocket<any>, Set<number>>();
+    /**
+     * @type {awarenessProtocol.Awareness}
+     */
+    this.awareness = new awarenessProtocol.Awareness(this);
+    this.awareness.setLocalState(null);
+    /**
+     * @param {{ added: Array<number>, updated: Array<number>, removed: Array<number> }} changes
+     * @param {ServerWebSocket | null} conn Origin is the connection that made the change
+     */
+    const awarenessChangeHandler = (
+      {
+        added,
+        updated,
+        removed,
+      }: {
+        added: Array<number>;
+        updated: Array<number>;
+        removed: Array<number>;
+      },
+      conn: ServerWebSocket<any> | null
+    ): void => {
+      const changedClients = added.concat(updated, removed);
+      if (conn !== null) {
+        const connControlledIDs = this.conns.get(conn);
+        if (connControlledIDs !== undefined) {
+          added.forEach((clientID) => {
+            connControlledIDs.add(clientID);
+          });
+          removed.forEach((clientID) => {
+            connControlledIDs.delete(clientID);
+          });
+        }
+      }
+      // broadcast awareness update
+      const encoder = encoding.createEncoder();
+      encoding.writeVarUint(encoder, messageAwareness);
+      encoding.writeVarUint8Array(
+        encoder,
+        awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
+      );
+      const buff = encoding.toUint8Array(encoder);
+      this.conns.forEach((_, c) => {
+        send(this, c, buff);
+      });
+    };
+    this.awareness.on("update", awarenessChangeHandler);
+    this.on("update", updateHandler as any);
+    if (isCallbackSet && callbackHandler) {
+      this.on(
+        "update",
+        debounce(callbackHandler, CALLBACK_DEBOUNCE_WAIT, {
+          maxWait: CALLBACK_DEBOUNCE_MAXWAIT,
+        }) as any
+      );
+    }
+    this.whenInitialized = contentInitializor(this);
+  }
+}
+
+/**
+ * Gets a Y.Doc by name, whether in memory or on disk
+ *
+ * @param {string} docname - the name of the Y.Doc to find or create
+ * @param {boolean} gc - whether to allow gc on the doc (applies only when created)
+ * @return {WSSharedDoc}
+ */
+export const getYDoc = (docname: string, gc: boolean = true): WSSharedDoc =>
+  map.setIfUndefined(docs, docname, () => {
+    const doc = new WSSharedDoc(docname);
+    doc.gc = gc;
+    if (persistence !== null) {
+      persistence.bindState(docname, doc);
+    }
+    docs.set(docname, doc);
+    return doc;
+  });
+
+/**
+ * @param {ServerWebSocket} ws
+ * @param {WSSharedDoc} doc
+ * @param {Uint8Array} message
+ */
+const messageListener = (
+  ws: ServerWebSocket<any>,
+  doc: WSSharedDoc,
+  message: Uint8Array
+): void => {
+  try {
+    const encoder = encoding.createEncoder();
+    const decoder = decoding.createDecoder(message);
+    const messageType = decoding.readVarUint(decoder);
+    switch (messageType) {
+      case messageSync:
+        encoding.writeVarUint(encoder, messageSync);
+        syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
+
+        // If the `encoder` only contains the type of reply message and no
+        // message, there is no need to send the message. When `encoder` only
+        // contains the type of reply, its length is 1.
+        if (encoding.length(encoder) > 1) {
+          send(doc, ws, encoding.toUint8Array(encoder));
+        }
+        break;
+      case messageAwareness: {
+        awarenessProtocol.applyAwarenessUpdate(
+          doc.awareness,
+          decoding.readVarUint8Array(decoder),
+          ws
+        );
+        break;
+      }
+    }
+  } catch (err) {
+    console.error("Error in messageListener:", err);
+  }
+};
+
+/**
+ * @param {WSSharedDoc} doc
+ * @param {ServerWebSocket} ws
+ */
+const closeConn = (doc: WSSharedDoc, ws: ServerWebSocket<any>): void => {
+  if (doc.conns.has(ws)) {
+    const controlledIds = doc.conns.get(ws)!;
+    doc.conns.delete(ws);
+    awarenessProtocol.removeAwarenessStates(
+      doc.awareness,
+      Array.from(controlledIds),
+      null
+    );
+    if (doc.conns.size === 0 && persistence !== null) {
+      // if persisted, we store state and destroy ydocument
+      persistence.writeState(doc.name, doc).then(() => {
+        doc.destroy();
+      });
+      docs.delete(doc.name);
+    }
+  }
+  wsToDocMap.delete(ws);
+};
+
+/**
+ * @param {WSSharedDoc} doc
+ * @param {ServerWebSocket} ws
+ * @param {Uint8Array} m
+ */
+const send = (
+  doc: WSSharedDoc,
+  ws: ServerWebSocket<any>,
+  m: Uint8Array
+): void => {
+  if (
+    ws.readyState !== wsReadyStateConnecting &&
+    ws.readyState !== wsReadyStateOpen
+  ) {
+    closeConn(doc, ws);
+    return;
+  }
+  try {
+    ws.send(m);
+  } catch (e) {
+    closeConn(doc, ws);
+  }
+};
+
+/**
+ * Helper to get document name from WebSocket data
+ */
+const getDocNameFromUrl = (wsData: WebSocketData): string => {
+  return `${wsData.type}/${wsData.id}`;
+};
+
+// Create a ping interval map to track ping intervals for each connection
+const pingIntervals = new Map<ServerWebSocket<any>, NodeJS.Timer>();
+const pongReceivedFlags = new Map<ServerWebSocket<any>, boolean>();
+const pingTimeout = 30000;
+
+// Implement the WSHandler interface
+export const wsCrdt = {
+  open: async (ws: ServerWebSocket<WebSocketData>) => {
+    // Get document name from WebSocket data
+    const docName = getDocNameFromUrl(ws.data);
+    wsToDocMap.set(ws, docName);
+
+    ws.binaryType = "arraybuffer";
+    // Get or create document
+    const doc = getYDoc(docName, true);
+    doc.conns.set(ws, new Set());
+
+    // Setup ping-pong to check connection liveness
+    pongReceivedFlags.set(ws, true);
+    const pingInterval = setInterval(() => {
+      if (!pongReceivedFlags.get(ws)) {
+        if (doc.conns.has(ws)) {
+          closeConn(doc, ws);
+        }
+        clearInterval(pingInterval);
+        pingIntervals.delete(ws);
+      } else if (doc.conns.has(ws)) {
+        pongReceivedFlags.set(ws, false);
+        try {
+          ws.ping();
+        } catch (e) {
+          closeConn(doc, ws);
+          clearInterval(pingInterval);
+          pingIntervals.delete(ws);
+        }
+      }
+    }, pingTimeout);
+    pingIntervals.set(ws, pingInterval);
+
+    // Send initial sync message
+    const encoder = encoding.createEncoder();
+    encoding.writeVarUint(encoder, messageSync);
+    syncProtocol.writeSyncStep1(encoder, doc);
+    send(doc, ws, encoding.toUint8Array(encoder));
+
+    // Send initial awareness states if available
+    const awarenessStates = doc.awareness.getStates();
+    if (awarenessStates.size > 0) {
+      const awarenessEncoder = encoding.createEncoder();
+      encoding.writeVarUint(awarenessEncoder, messageAwareness);
+      encoding.writeVarUint8Array(
+        awarenessEncoder,
+        awarenessProtocol.encodeAwarenessUpdate(
+          doc.awareness,
+          Array.from(awarenessStates.keys())
+        )
+      );
+      send(doc, ws, encoding.toUint8Array(awarenessEncoder));
+    }
+  },
+
+  message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
+    // Handle binary messages for Yjs protocol
+    if (message instanceof Buffer) {
+      const docName = wsToDocMap.get(ws);
+      if (docName) {
+        const doc = docs.get(docName);
+        if (doc) {
+          messageListener(ws, doc, new Uint8Array(message));
+        }
+      }
+    }
+    // Handle potential pong messages
+    if (message === "pong") {
+      pongReceivedFlags.set(ws, true);
+    }
+  },
+
+  close(ws: ServerWebSocket<WebSocketData>, code: number, reason: string) {
+    // Clean up when connection closes
+    const docName = wsToDocMap.get(ws);
+    if (docName) {
+      const doc = docs.get(docName);
+      if (doc) {
+        closeConn(doc, ws);
+      }
+    }
+
+    // Clear ping interval
+    const pingInterval = pingIntervals.get(ws);
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingIntervals.delete(ws);
+    }
+    pongReceivedFlags.delete(ws);
+    wsToDocMap.delete(ws);
+  },
+} as const satisfies WSHandler;

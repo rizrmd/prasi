@@ -15,6 +15,7 @@ import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import { wsRouter } from "./ws";
+import type { WebSocketData } from "./ws/typings";
 
 initServer();
 
@@ -68,7 +69,7 @@ g.server = Bun.serve({
     "/_prasi/:site_id/pages": routePrasiPages,
     "/_prasi/:site_id/page/:page_id": routePrasiPage,
     "/_prasi/:site_id/info": routePrasiInfo,
-    "/_crdt/page/:page_id": acceptWS({ route: "crdt-page" }),
+    "/_crdt/:type/:id": acceptWS({ route: "crdt" }),
     "/_prasi/:site_id/loading": acceptWS({ route: "site-loading" }),
   },
   websocket: {
@@ -98,7 +99,7 @@ g.server = Bun.serve({
     }
     return jsBase.serve(request);
   },
-} as WebSocketServeOptions<{ page_id?: string; site_id?: string; route: string }>);
+} as WebSocketServeOptions<WebSocketData>);
 
 if (init) {
   console.log(

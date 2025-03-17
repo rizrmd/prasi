@@ -3,6 +3,14 @@
   "dependencies": {
     "bun-sqlite-key-value": "^1.13.1",
     "chalk": "^5.4.1",
-    "uuid": "^11.1.0"
+    "lib0": "^0.2.99",
+    "lodash.debounce": "^4.0.8",
+    "uuid": "^11.1.0",
+    "y-leveldb": "^0.1.2",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.24"
+  },
+  "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9"
   }
 }
