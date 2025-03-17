@@ -29,7 +29,13 @@ declare global {
       siteurl: string;
       baseurl: string;
       exports: Record<string, any>;
-      urls: { pages: string; layout: string; page: string; components: string };
+      urls?: {
+        pages: string;
+        layout: string;
+        page: string;
+        components: string;
+      };
+      custom?: { page: ReactTypes.ReactElement };
     };
     siteReady: (rootElement: ReactTypes.ReactComp) => void;
     navigateOverride: (href: string) => string;

@@ -15,7 +15,7 @@ export const navigate = async (href: string) => {
   let final_href = href;
   if (typeof window.navigateOverride === "function") {
     final_href = window.navigateOverride(href);
-    if (!final_href) return null;
+    if (!final_href) return;
   }
   history.pushState({ prevUrl: window.location.href }, "", final_href);
   router.navigate(getPathname(final_href));
@@ -54,7 +54,7 @@ export const preload = async (paths: string[]) => {
 
       await Promise.all(
         [...page_ids].map(async (page_id) => {
-          const url = window.prasi_site.urls.page.replace(":page_id", page_id);
+          const url = window.prasi_site.urls!.page.replace(":page_id", page_id);
           const page = await fetch(url);
           const loaded = (await page.json()) as {
             page: PageContent;

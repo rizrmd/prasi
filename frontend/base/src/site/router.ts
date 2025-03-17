@@ -3,7 +3,10 @@ import { createViWrite } from "src/prasi/vi/vi-state";
 import { proxy } from "valtio";
 
 export type PageRoute = { id: string; url: string; name: string };
-type RouteMatch = { page: PageRoute; params: Record<string, string> } | null;
+export type RouteMatch = {
+  page: PageRoute;
+  params: Record<string, string>;
+} | null;
 type RouteEntry = { url: string; page: PageRoute; paramCount: number };
 
 export type Router = ReturnType<typeof createRouter>;
@@ -32,6 +35,7 @@ export const createRouter = () => ({
   layout: null as null | PageContent,
   navigate: async (href: string) => {
     const current = router.match(href);
+
     if (current) {
       const lastMode = window.viWrite.mode;
       if (router.current?.page.id !== current.page.id) {
@@ -43,7 +47,7 @@ export const createRouter = () => ({
       if (!router.pages[current.page.id]) {
         router.render();
         const page = await fetch(
-          window.prasi_site.urls.page.replace(":page_id", current.page.id)
+          window.prasi_site.urls!.page.replace(":page_id", current.page.id)
         );
         const loaded = (await page.json()) as {
           page: PageContent;

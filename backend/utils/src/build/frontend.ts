@@ -26,7 +26,11 @@ export const frontend = {
         stdin: "inherit",
       });
     } else {
-      await run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -m`);
+      await run(`bun tailwindcss -i ${arg.input} -o ${arg.output} -m`, {
+        mode: "silent",
+        cwd: arg.root,
+        stdin: "inherit",
+      });
     }
   },
   dev: async (arg: BuilderArg & { logs?: (log: string) => string | void }) => {
@@ -51,14 +55,16 @@ export const frontend = {
     await bundleMako({
       ...arg,
       watch: false,
+      config: {
+        devServer: false,
+        hmr: false,
+        ...config,
+        ...arg.config,
+      },
       name: `fe~${trim(
         dirname(arg.entryfile).substring(process.cwd().length),
         "/\\"
       )}`,
-      config: {
-        ...config,
-        ...arg.config,
-      },
     });
   },
 };

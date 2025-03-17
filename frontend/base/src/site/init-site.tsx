@@ -1,24 +1,51 @@
+import type { ReactElement } from "react";
 import { initNavigation } from "src/libs/navigate";
 import type { IItem } from "src/prasi/logic/types";
 import { PrasiRoot } from "src/prasi/root";
 import { createViWrite } from "src/prasi/vi/vi-state";
-import { router, type PageContent, type PageRoute } from "./router";
 import { subscribe } from "valtio";
+import { router, type PageContent, type PageRoute } from "./router";
 
 export const initSite = async (opt: {
   site_id: string;
   site_url: string;
-  urls: (typeof window.prasi_site)["urls"];
+  urls?: (typeof window.prasi_site)["urls"];
+  custom?: {
+    root: ReactElement;
+    route: (path: string) => void;
+  };
 }) => {
-  initNavigation();
   window.prasi_site = {
     id: opt.site_id,
     siteurl: opt.site_url,
-    baseurl: `/prod/${opt.site_id}`,
+    baseurl: ["localhost", "prasi.avolut.com"].includes(location.hostname)
+      ? `/prod/${opt.site_id}`
+      : "/",
     exports: {},
     urls: opt.urls,
   };
-  const fn = new Function(`return import("/prod/${opt.site_id}/index.js")`);
+
+  if (opt.custom) {
+    window.prasi_site.custom = { page: <></> };
+    window.navigate = async (href: string) => {
+      history.pushState({ prevUrl: window.location.href }, "", href);
+      opt.custom!.route(href);
+    };
+    window.addEventListener("popstate", () => {
+      opt.custom!.route(location.pathname);
+    });
+    window.siteReady(opt.custom.root);
+    opt.custom!.route(location.pathname);
+  } else {
+    initNavigation();
+  }
+
+  if (!opt.urls) {
+    return;
+  }
+  const fn = new Function(
+    `return import("${window.prasi_site.baseurl}/index.js")`
+  );
   const pathname = location.pathname.substring(
     window.prasi_site.baseurl.length
   );
@@ -50,9 +77,8 @@ export const initSite = async (opt: {
     window.viWrite = createViWrite();
 
     subscribe(router.componentPendingRender, async (op) => {
-      console.log(op);
       if (op.find((e) => e[0] === "set")) {
-        const comps = await fetch(window.prasi_site.urls.components, {
+        const comps = await fetch(window.prasi_site.urls!.components, {
           method: "POST",
           body: JSON.stringify(Object.keys(router.componentPendingRender)),
         });

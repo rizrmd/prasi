@@ -41,7 +41,7 @@ const jsBase = staticFile({
 <html>
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="/js/base/index.css" />
+    <link rel="stylesheet" href="/js/editor/main.css" />
   </head>
   <body>
     <script type="module" src="/js/base/index.js"></script>

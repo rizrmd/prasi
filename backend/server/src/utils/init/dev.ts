@@ -37,5 +37,11 @@ export const initDev = async () => {
       entryfile: dir.path("frontend:editor/src/index.tsx"),
       outdir: dir.path("data:frontend/editor"),
     });
+    frontend.tailwind({
+      root: dir.path("frontend:editor/src/"),
+      input: dir.path("frontend:editor/src/index.css"),
+      output: dir.path("data:frontend/editor/main.css"),
+      mode: "dev",
+    });
   }
 };
