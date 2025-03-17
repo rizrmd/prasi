@@ -1,9 +1,9 @@
 import {
+  isValidElement,
   useState,
   type FC,
   type ReactElement,
   type ReactNode,
-  isValidElement,
 } from "react";
 import { ref } from "valtio";
 import type { DeepReadonly, IItem } from "../logic/types";
@@ -11,7 +11,7 @@ import { viLocal } from "./script/vi-local";
 import { viPassProp } from "./script/vi-passprop";
 import { ViItem } from "./vi-item";
 import { viProps } from "./vi-props";
-import { viRead, viState, writeScope, type ItemPaths } from "./vi-state";
+import { viRead, viState, type ItemPaths } from "./vi-state";
 
 export const ViScript: FC<{
   item: DeepReadonly<IItem>;
@@ -23,6 +23,7 @@ export const ViScript: FC<{
   const render = useState({})[1];
   const { write, all, instances } = viState({ is_layout, item, paths });
   const jsBuilt = item.adv?.jsBuilt!;
+  write.render = render;
 
   const instance = write.instance_id ? instances[write.instance_id] : null;
   const component_props: any = {};
@@ -39,9 +40,10 @@ export const ViScript: FC<{
   const scope: any = {
     ...passprop,
   };
+
   for (const path of paths) {
     if (path.local) {
-      const local = writeScope.local[path.id];
+      const local = window.viWrite.scope.local[path.id];
       if (local) {
         scope[local.name] = local.value;
       }
@@ -65,7 +67,10 @@ export const ViScript: FC<{
       : null,
     Local: write.Local,
     PassProp: write.PassProp,
+    _item: item,
+    __props: passprop,
   };
+
   if (!write.jsBuilt) {
     try {
       write.jsBuilt = ref(
@@ -76,12 +81,14 @@ export const ViScript: FC<{
           ...Object.keys(component_props),
           ...Object.keys(scope),
           `\
-try { ${jsBuilt} } catch(e) {
-console.error("ERROR [${item.name}]\\n ${printPaths(
+  try { 
+    ${jsBuilt.split("\n").join("\n    ")}
+  } catch(e) {
+    console.error("ERROR [${item.name}]\\n ${printPaths(
             [...paths, { id: item.id }],
             all
           )}:\\n\\n", e)
-}`
+  }`
         )
       ) as any;
     } catch (e) {
@@ -95,7 +102,7 @@ console.error("ERROR [${item.name}]\\n ${printPaths(
 
       return null;
     }
-    write.Local = viLocal({ item, render: () => render({}) });
+    write.Local = viLocal({ item, write });
     write.PassProp = viPassProp({ item, is_layout });
     args.Local = write.Local;
     args.PassProp = write.PassProp;

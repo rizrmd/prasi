@@ -1,6 +1,5 @@
 import type { ReactElement } from "react";
 import type { DeepReadonly, IItem } from "src/prasi/logic/types";
-import { write, type ItemPaths } from "../vi-state";
 import { modifyChildren } from "./modify-children";
 
 export const viPassProp = ({
@@ -13,10 +12,9 @@ export const viPassProp = ({
     const children = args.children;
 
     return modifyChildren(children, item, (child) => {
-      const child_props = child.props as any;
       const passprop: any = { ...args };
       delete passprop.children;
-      child_props.passprop = passprop;
+      (child.props as any).passprop = passprop;
     });
   };
 };

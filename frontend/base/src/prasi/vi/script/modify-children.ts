@@ -9,15 +9,13 @@ export const modifyChildren = (
 ) => {
   const modifyChild = (child: ReactElement) => {
     const paths = (child.props as any)?.paths as ItemPaths;
-    if (Array.isArray(paths)) {
+    if (typeof path === "function") {
+      path(child);
+    } else if (Array.isArray(paths)) {
       const last = paths[paths.length - 1];
       if (last && last.id === item.id) {
-        if (typeof path === "function") {
-          path(child);
-        } else {
-          for (const [k, v] of Object.entries(path)) {
-            (last as any)[k] = v;
-          }
+        for (const [k, v] of Object.entries(path)) {
+          (last as any)[k] = v;
         }
       }
     }

@@ -6,11 +6,11 @@ export const watcher = {
     if (this.current[path]) {
       this.remove(path);
     }
-    
+
     const resolvedPath = dir.path(path);
     dir.ensure(path);
     try {
-      const watcher = watch(resolvedPath, callback);
+      const watcher = watch(resolvedPath, { recursive: true }, callback);
       this.current[path] = watcher;
       return watcher;
     } catch (err) {

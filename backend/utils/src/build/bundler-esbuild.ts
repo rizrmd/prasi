@@ -12,6 +12,7 @@ export const bundleEsbuild = async (
     define?: Record<string, string>;
   }
 ) => {
+  const files = new Set<string>();
   const ctx = await context({
     entryPoints: [arg.entryfile],
     outdir: arg.outdir,
@@ -29,6 +30,13 @@ export const bundleEsbuild = async (
       {
         name: "react-from-window",
         setup(build) {
+          files.clear();
+          build.onLoad({ filter: /.*/, namespace: undefined }, (e) => {
+            if (e.path.includes("node_modules")) return null;
+            const path = e.path.substring(arg.root.length + 1);
+            files.add(path);
+            return null;
+          });
           const moduleToGlobal: Record<string, [string, any]> = {
             react: ["React", React],
             "react/jsx-dev-runtime": ["JSXDevRuntime", ReactJSXDev],
@@ -83,4 +91,10 @@ export const bundleEsbuild = async (
   });
 
   await ctx.rebuild();
+  return {
+    files,
+    rebuild: async () => {
+      await ctx.rebuild();
+    },
+  };
 };

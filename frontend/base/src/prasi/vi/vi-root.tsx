@@ -1,7 +1,6 @@
+import type { FC } from "react";
 import { router } from "src/site/router";
 import { ViItem } from "./vi-item";
-import type { FC } from "react";
-import { write } from "./vi-state";
 
 export const ViRoot: FC<{}> = ({}) => {
   const layout = router.layout;
@@ -13,5 +12,5 @@ export const ViRoot: FC<{}> = ({}) => {
     ));
   }
 
-  return <div className="bg-amber-500">Tokotok</div>;
+  return <div className="bg-amber-500">No item</div>;
 };

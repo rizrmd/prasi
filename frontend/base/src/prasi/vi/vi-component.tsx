@@ -1,9 +1,9 @@
-import { useEffect, type FC } from "react";
+import { type FC } from "react";
 import { router } from "src/site/router";
 import { ref } from "valtio";
 import type { DeepReadonly, FNCompDef, IItem } from "../logic/types";
 import { ViItem } from "./vi-item";
-import { viState, writeScope, type ItemPaths } from "./vi-state";
+import { viState, type ItemPaths } from "./vi-state";
 
 export const ViComponent: FC<{
   item: DeepReadonly<IItem>;
@@ -13,7 +13,6 @@ export const ViComponent: FC<{
 }> = ({ item, is_layout, paths, passprop }) => {
   const { instances, write } = viState({ is_layout, item, paths });
   const component = router.components[item.component!.id]!;
-
   const instance_id = passprop ? `${item.id}-${passprop.idx}` : item.id;
 
   const generateProps = () => {
@@ -25,7 +24,7 @@ export const ViComponent: FC<{
     };
     for (const path of paths) {
       if (path.local) {
-        const local = writeScope.local[path.id];
+        const local = window.viWrite.scope.local[path.id];
         if (local) {
           scope[local.name] = local.value;
         }
@@ -37,6 +36,7 @@ export const ViComponent: FC<{
         props[k] = parseProp(k, v, item, paths, scope);
       }
     }
+
     return ref(props);
   };
 
@@ -56,6 +56,7 @@ export const ViComponent: FC<{
       props: generateProps(),
       item: instance_item,
     };
+
     const instance = instances[instance_id]!;
     instance.item.id = item.id;
     delete instance.item.component;
@@ -104,12 +105,19 @@ const parseProp = (
     if (content) {
       return {
         __jsx: true,
-        __Component: ({ is_layout }: { is_layout: boolean }) => {
+        __Component: ({
+          is_layout,
+          passprop,
+        }: {
+          is_layout: boolean;
+          passprop: any;
+        }) => {
           return (
             <ViItem
               is_layout={is_layout}
               item={content}
-              paths={[...paths, { id: content.id }]}
+              paths={[...paths, { id: item.id }]}
+              passprop={passprop}
             />
           );
         },

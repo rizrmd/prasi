@@ -14,7 +14,7 @@ export const ViItem: FC<{
   passprop?: { idx: any } & Record<string, any>;
 }> = ({ item, is_layout, paths, passprop }) => {
   viState({ is_layout, item, paths });
-  const vi = viRead();
+
   if (item.hidden) return null;
 
   if (item.component?.id) {
@@ -30,6 +30,9 @@ export const ViItem: FC<{
           />
         </ErrorBox>
       );
+    } else {
+      router.componentPendingRender[item.component.id] = true;
+      return null;
     }
   }
 
@@ -57,7 +60,7 @@ export const ViItem: FC<{
     );
   }
 
-  const props = viProps(item, { mode: vi.mode });
+  const props = viProps(item, { mode: window.viWrite.mode });
   if (item.html) {
     return (
       <div {...props} dangerouslySetInnerHTML={{ __html: item.html }}></div>

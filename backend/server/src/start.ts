@@ -17,6 +17,7 @@ import type {
   WebSocketServeOptions,
 } from "bun";
 import { Site } from "prasi/site";
+import { routePrasiComponents } from "./routes/prasi/components";
 
 initServer();
 
@@ -66,6 +67,7 @@ g.server = Bun.serve({
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
     "/_prasi/:site_id/layout": routePrasiLayout,
+    "/_prasi/:site_id/components": routePrasiComponents,
     "/_prasi/:site_id/pages": routePrasiPages,
     "/_prasi/:site_id/page/:page_id": routePrasiPage,
     "/_prasi/:site_id/info": routePrasiInfo,

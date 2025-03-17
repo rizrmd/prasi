@@ -1,4 +1,6 @@
 import type { IItem } from "src/prasi/logic/types";
+import { createViWrite } from "src/prasi/vi/vi-state";
+import { proxy } from "valtio";
 
 export type PageRoute = { id: string; url: string; name: string };
 type RouteMatch = { page: PageRoute; params: Record<string, string> } | null;
@@ -18,6 +20,8 @@ export const createRouter = () => ({
   current: null as null | RouteMatch,
   components: {} as Record<string, IItem>,
   pages: {} as Record<string, PageContent>,
+  render: () => {},
+  componentPendingRender: proxy({} as Record<string, boolean>),
   get page() {
     const page_id = this.current?.page.id;
     if (page_id) {
@@ -26,6 +30,35 @@ export const createRouter = () => ({
     return null;
   },
   layout: null as null | PageContent,
+  navigate: async (href: string) => {
+    const current = router.match(href);
+    if (current) {
+      const lastMode = window.viWrite.mode;
+      if (router.current?.page.id !== current.page.id) {
+        window.viWrite = createViWrite();
+        if (lastMode) window.viWrite.mode = lastMode;
+      }
+      router.current = current;
+      window.params = current.params;
+      if (!router.pages[current.page.id]) {
+        router.render();
+        const page = await fetch(
+          window.prasi_site.urls.page.replace(":page_id", current.page.id)
+        );
+        const loaded = (await page.json()) as {
+          page: PageContent;
+          components: Record<string, IItem>;
+        };
+        router.pages[current.page.id] = loaded.page;
+        for (const [k, v] of Object.entries(loaded.components)) {
+          router.components[k] = v;
+        }
+        router.render();
+      } else {
+        router.render();
+      }
+    }
+  },
   init(pages: PageRoute[]) {
     this.routes = [];
     for (const page of pages) {

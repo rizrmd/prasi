@@ -6,6 +6,7 @@ import { initSite } from "../site/init-site";
 import { navigate as import_navigate } from "./navigate";
 import { css as import_css } from "goober";
 import { cx as import_cx } from "./cx";
+import type { createViWrite } from "src/prasi/vi/vi-state";
 declare global {
   interface Window {
     React: typeof ReactTypes;
@@ -28,9 +29,13 @@ declare global {
       siteurl: string;
       baseurl: string;
       exports: Record<string, any>;
-      urls: { pages: string; layout: string; page: string };
+      urls: { pages: string; layout: string; page: string; components: string };
     };
     siteReady: (rootElement: ReactTypes.ReactComp) => void;
+    navigateOverride: (href: string) => string;
+    isEditor: boolean;
+    params: any;
+    viWrite: ReturnType<typeof createViWrite>;
   }
 
   const navigate = import_navigate;

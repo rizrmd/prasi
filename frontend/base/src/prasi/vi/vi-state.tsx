@@ -12,13 +12,14 @@ export type ItemPath = {
   local?: true;
 };
 export type ItemPaths = ItemPath[];
-type ItemState = {
+export type ItemWriteState = {
   name: string;
   instance_id?: ITEM_ID;
   component?: DeepReadonly<FNComponent>;
   jsBuilt?: (render: (el: ReactElement) => void, ...args: any[]) => void;
   Local?: ReturnType<typeof viLocal>;
   PassProp?: ReturnType<typeof viPassProp>;
+  render?: (state: any) => void;
 };
 
 type ComponentInstance = {
@@ -35,24 +36,26 @@ type ComponentInstance = {
   item: IItem;
 };
 
-export const write = proxy({
-  mode: "desktop" as "desktop" | "mobile",
-  state: {
-    layout: {} as Record<ITEM_ID, ItemState>,
-    page: {} as Record<ITEM_ID, ItemState>,
-  },
-  instances: {
-    layout: {} as Record<ITEM_ID, ComponentInstance>,
-    page: {} as Record<ITEM_ID, ComponentInstance>,
-  },
-  scope: ref({
-    local: {} as Record<string, { name: string; value: any }>,
-  }),
-});
+export type ViWrite = ReturnType<typeof createViWrite>;
+export const createViWrite = () => {
+  return proxy({
+    mode: "" as "desktop" | "mobile",
+    state: {
+      layout: {} as Record<ITEM_ID, ItemWriteState>,
+      page: {} as Record<ITEM_ID, ItemWriteState>,
+    },
+    instances: {
+      layout: {} as Record<ITEM_ID, ComponentInstance>,
+      page: {} as Record<ITEM_ID, ComponentInstance>,
+    },
+    scope: ref({
+      local: {} as Record<string, { name: string; value: any }>,
+    }),
+  });
+};
 
-export const writeScope = write.scope;
 export const viRead = (opt?: Parameters<typeof useSnapshot>[1]) => {
-  return useSnapshot(write, opt);
+  return useSnapshot(window.viWrite, opt);
 };
 
 export const viState = (opt: {
@@ -66,15 +69,15 @@ export const viState = (opt: {
 
   const mode = opt.is_layout ? "layout" : "page";
   let id = opt.item.id;
-  if (write.state[mode][opt.item.id] === undefined) {
+  if (window.viWrite.state[mode][opt.item.id] === undefined) {
     const lastPath = paths[paths.length - 1];
 
     let instance_id = undefined;
     if (lastPath) {
-      const lastItem = write.state[mode][lastPath.id];
+      const lastItem = window.viWrite.state[mode][lastPath.id];
       if (lastItem?.instance_id) {
         instance_id = lastItem.instance_id;
-        const instance = write.instances[mode][instance_id];
+        const instance = window.viWrite.instances[mode][instance_id];
         if (instance) {
           const current = instance.mappings[opt.item.id];
           if (!current) {
@@ -101,7 +104,7 @@ export const viState = (opt: {
       }
     }
 
-    write.state[mode][id] = {
+    window.viWrite.state[mode][id] = {
       name: opt.item.name,
       component: opt.item.component,
       instance_id,
@@ -110,8 +113,8 @@ export const viState = (opt: {
 
   return {
     read: read?.state[mode][id],
-    write: write.state[mode][id]!,
-    all: write.state[mode],
-    instances: write.instances[mode],
+    write: window.viWrite.state[mode][id]!,
+    all: window.viWrite.state[mode],
+    instances: window.viWrite.instances[mode],
   };
 };

@@ -22,6 +22,7 @@ export const staticInfo = (site_id: string, site_url: string) => {
         <meta charset="utf-8" />
         <link rel="icon" href="/prod/${site_id}/favicon.ico" type="image/x-icon" />
         <link rel="stylesheet" href="/js/base/main.css" />
+        <link rel="stylesheet" href="/prod/${site_id}/index.css" />
       </head>
       <body>
         <script type="module" src="/js/base/index.js"></script>

@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { DeepReadonly, IItem } from "src/prasi/logic/types";
 import { modifyChildren } from "./modify-children";
-import { writeScope } from "../vi-state";
+import type { ItemWriteState } from "../vi-state";
+import { useSnapshot } from "valtio";
 
 export const viLocal = ({
   item,
-  render,
+  write,
 }: {
   item: DeepReadonly<IItem>;
-  render: () => void;
+  write: ItemWriteState;
 }) => {
   return <T,>({
     value,
@@ -24,11 +25,16 @@ export const viLocal = ({
     children: ReactElement | ReactElement[];
   }) => {
     if (_mode !== "read-write") {
-      const local = useRef(value).current as unknown as T & {
-        render: () => void;
+      if (!window.viWrite.scope.local[item.id]) {
+        window.viWrite.scope.local[item.id] = { name, value };
+      }
+      const local = window.viWrite.scope.local[item.id]!.value;
+      local.render = () => {
+        setTimeout(() => {
+          write.render?.({});
+        });
       };
-      local.render = render;
-      writeScope.local[item.id] = { name, value: local };
+
       useEffect(() => {
         effect?.(local);
       }, []);

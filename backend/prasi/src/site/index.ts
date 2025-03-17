@@ -7,6 +7,7 @@ import { dir } from "utils/dir";
 import { getFreePort } from "utils/port";
 import { run } from "utils/run";
 import { loadGitRepo } from "./git-repo";
+import { watcher } from "utils/watcher";
 export const Site = {
   loaded: {} as Record<
     string,
@@ -126,15 +127,67 @@ export const Site = {
             `data:code/${site.site.id}/site/src/${input.frontend}`
           );
           await rimraf(outdir);
-          await bundleEsbuild({
-            root: dir.path(`data:code/${site.site.id}/site/src`),
-            entryfile,
-            external: [...(prasi.exclude || []), "react", "react-dom"],
-            outdir,
-            logs(log) {
-              site.log.build.backend.push(log);
-            },
-          });
+          const source = {
+            files: new Set<string>(),
+            rebuilding: false,
+            rebuild: async () => {},
+            onRebuilt: () => {},
+            init: false,
+          };
+          const rebuild = async () => {
+            source.rebuilding = true;
+            try {
+              site.log.build.frontend = [];
+
+              if (!source.init) {
+                const ctx = await bundleEsbuild({
+                  root: dir.path(`data:code/${site.site.id}/site/src`),
+                  entryfile,
+                  external: [...(prasi.exclude || []), "react", "react-dom"],
+                  outdir,
+                  logs(log) {
+                    site.log.build.frontend.push(log);
+                  },
+                });
+                source.files = ctx.files;
+                source.init = true;
+                source.rebuild = ctx.rebuild;
+              }
+              await source.rebuild();
+            } catch (e: any) {
+              site.log.build.frontend.push(e.message);
+            }
+            source.rebuilding = false;
+            source.onRebuilt();
+            source.onRebuilt = () => {};
+          };
+          await rebuild();
+
+          watcher.add(
+            dir.path(`data:code/${site.site.id}/site/src`),
+            (op, file) => {
+              if (file && source.files.has(file)) {
+                if (!source.rebuilding) {
+                  rebuild();
+                } else {
+                  source.onRebuilt = rebuild;
+                }
+              }
+            }
+          );
+
+          run(
+            `bun tailwindcss -i ${dir.path(
+              `data:code/${site.site.id}/site/src/app/css/global.css`
+            )} -o ${dir.path(
+              `data:code/${site.site.id}/site/src/app/css/build.css`
+            )} -w -m`,
+            {
+              mode: "silent",
+              cwd: dir.path(`data:code/${site.site.id}/site/src`),
+              stdin: "inherit",
+            }
+          );
         },
         backend: async () => {
           await backend.dev({
