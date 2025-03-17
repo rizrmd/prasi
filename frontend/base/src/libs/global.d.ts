@@ -40,7 +40,7 @@ declare global {
     siteReady: (rootElement: ReactTypes.ReactComp) => void;
     navigateOverride: (href: string) => string;
     isEditor: boolean;
-    params: any;
+    params: Record<string, any>;
     viWrite: ReturnType<typeof createViWrite>;
   }
 
@@ -54,6 +54,7 @@ declare global {
   const preload = import_navigate.preload;
   const preloaded = import_navigate.preloaded;
   const siteReady = (rootElement: ReactTypes.ReactComp) => {};
+  const params = Record<string, any>;
 }
 
 export {};

@@ -3,7 +3,7 @@ import { EditorRoot, root } from "./lib/root";
 import { matchRoute, parsePattern, type Params } from "./lib/router";
 
 window.initSite({
-  site_id: "a0170f25-a9d9-4646-a970-f1c2e5747971",
+  site_id: "a0170f25-a9d9-4646-a970-f1c2e5747971", // prasi-core
   site_url: "prasi.avolut.com",
   custom: {
     root: <EditorRoot />,
@@ -24,6 +24,8 @@ window.initSite({
           }
         }
       }
+
+      window.params = matchedParams;
 
       if (pageLoader) {
         const Page = (await pageLoader()).default;

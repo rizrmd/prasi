@@ -8,6 +8,7 @@ import { getFreePort } from "utils/port";
 import { run } from "utils/run";
 import { loadGitRepo } from "./git-repo";
 import { watcher } from "utils/watcher";
+
 export const Site = {
   loaded: {} as Record<
     string,
@@ -26,7 +27,7 @@ export const Site = {
     }
   >,
   loading: {} as Record<string, { status: string; promise: Promise<DBSite> }>,
-  ws_waiting: {} as Record<string, Set<ServerWebSocket<{ url: URL }>>>,
+  ws_waiting: {} as Record<string, Set<ServerWebSocket<{ route: string }>>>,
   ws_broadcast(site_id: string, msg: string) {
     const conns = this.ws_waiting[site_id];
     if (conns) {

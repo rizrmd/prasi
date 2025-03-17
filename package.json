@@ -11,7 +11,8 @@
     "prisma": "cd backend/db && bun --silent prisma",
     "prod": "bun backend/server/src/start.ts",
     "dev": "bun --hot --no-clear-screen --silent backend/server/src/start.ts --dev",
-    "ui": "cd frontend/editor && bunx --bun shadcn@latest"
+    "ui": "cd frontend/editor && bunx --bun shadcn@latest",
+    "editor": "cd frontend/editor && bun"
   },
   "devDependencies": {
     "@types/bun": "^1.2.5",
