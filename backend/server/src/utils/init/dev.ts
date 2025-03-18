@@ -7,7 +7,9 @@ import { dir } from "utils/dir";
 
 export const initDev = async () => {
   if (!g.dev) {
-    console.log(`Running in ${chalk.blue("DEV")} mode`);
+    if (!g.is_restarted) {
+      console.log(`Running in ${chalk.blue("DEV")} mode`);
+    }
 
     g.dev = {};
     watcher.add("frontend:editor/src/pages", (file) => {

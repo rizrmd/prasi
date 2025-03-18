@@ -25,11 +25,6 @@ if (argv.has("--dev")) {
   initProd();
 }
 
-let init = false;
-if (!g.server) {
-  init = true;
-}
-
 const jsBase = staticFile({
   baseDir: dir.path(`data:frontend/base`),
   pathPrefix: "/js/base",
@@ -101,10 +96,14 @@ g.server = Bun.serve({
   },
 } as WebSocketServeOptions<WebSocketData>);
 
-if (init) {
+if (!g.is_restarted) {
   console.log(
     `Server started at ${chalk.green.underline(
       `http://localhost:${g.server.port}`
-    )} [0.0.0.0]`
+    )} [0.0.0.0] PID: ${process.pid}`
+  );
+} else {
+  console.log(
+    `Server reloaded at ${chalk.green(new Date().toLocaleTimeString())}`
   );
 }

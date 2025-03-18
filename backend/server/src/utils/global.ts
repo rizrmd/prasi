@@ -7,4 +7,5 @@ export const g = global as unknown as {
   server: Server;
   shutting_down: boolean;
   exit_hook: boolean;
+  is_restarted: boolean;
 };

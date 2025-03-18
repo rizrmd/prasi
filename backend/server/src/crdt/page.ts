@@ -1,6 +1,9 @@
 import { db } from "db/use";
 import type { PageContent } from "frontend/base/src/site/router";
 import { validate } from "uuid";
+
+const save = {} as Record<string, Timer>;
+
 export default {
   init: async (id: string) => {
     const page_id = id.substring("page/".length);
@@ -15,13 +18,11 @@ export default {
   },
   update: async (id: string, data: any) => {
     const page_id = id.substring("page/".length);
-    console.log(page_id, data);
     if (validate(page_id)) {
       await db.page.update({
         where: { id: page_id },
         data: { content_tree: data },
       });
     }
-    return;
   },
 };
