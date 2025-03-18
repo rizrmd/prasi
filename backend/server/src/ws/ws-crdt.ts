@@ -1,6 +1,7 @@
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
+import { UndoManager, Transaction } from "yjs";
 
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
@@ -10,6 +11,7 @@ import type { ServerWebSocket } from "bun";
 import debounce from "lodash.debounce";
 import type { WSHandler } from "server/utils/accept-ws";
 import type { WebSocketData } from "./typings";
+import { crdtTypes } from "../crdt/crdt-types";
 
 const CALLBACK_DEBOUNCE_WAIT = parseInt(
   process.env.CALLBACK_DEBOUNCE_WAIT || "2000"
@@ -24,8 +26,20 @@ const wsReadyStateClosing = 2; // eslint-disable-line
 const wsReadyStateClosed = 3; // eslint-disable-line
 
 type CallbackFn = (update: Uint8Array, origin: any, doc: Y.Doc) => void;
-let callbackHandler: CallbackFn | null = null;
-let isCallbackSet = false;
+let callbackHandler: CallbackFn | null = (
+  update: Uint8Array,
+  origin: any,
+  doc: Y.Doc
+) => {
+  if (doc instanceof WSSharedDoc) {
+    const type = doc.name.split("/")[0];
+    const crdt = crdtTypes[type as keyof typeof crdtTypes];
+    if (crdt && crdt.update) {
+      crdt.update(doc.name, origin);
+    }
+  }
+};
+let isCallbackSet = true;
 
 /**
  * Set a callback that is called whenever the document is updated.
@@ -44,7 +58,25 @@ const wsToDocMap = new Map<ServerWebSocket<any>, string>();
 
 const messageSync = 0;
 const messageAwareness = 1;
-// const messageAuth = 2
+const messageUndoRedoReceived = 3;
+const messageUndoRedoSend = 3;
+
+/**
+ * Send current undo/redo status to client
+ */
+const sendUndoRedoStatus = (
+  doc: WSSharedDoc,
+  ws: ServerWebSocket<any>
+): void => {
+  if (!doc.undoManager) return;
+  const encoder = encoding.createEncoder();
+  encoding.writeVarUint(encoder, messageUndoRedoSend);
+  const canUndo = doc.undoManager.canUndo();
+  const canRedo = doc.undoManager.canRedo();
+  encoding.writeVarUint(encoder, canUndo ? 1 : 0);
+  encoding.writeVarUint(encoder, canRedo ? 1 : 0);
+  send(doc, ws, encoding.toUint8Array(encoder));
+};
 
 /**
  * @param {Uint8Array} update
@@ -62,14 +94,42 @@ const updateHandler = (
   encoding.writeVarUint(encoder, messageSync);
   syncProtocol.writeUpdate(encoder, update);
   const message = encoding.toUint8Array(encoder);
-  doc.conns.forEach((_, conn) => send(doc, conn, message));
+  doc.conns.forEach((_, conn) => {
+    send(doc, conn, message);
+    sendUndoRedoStatus(doc, conn);
+  });
 };
 
 /**
  * @type {(ydoc: Y.Doc) => Promise<void>}
  */
-let contentInitializor: (ydoc: Y.Doc) => Promise<void> = (_ydoc: Y.Doc) =>
-  Promise.resolve();
+let contentInitializor: (ydoc: Y.Doc) => Promise<void> = async (
+  ydoc: Y.Doc
+) => {
+  if (ydoc instanceof WSSharedDoc && !ydoc.isInitialized) {
+    const type = ydoc.name.split("/")[0];
+    const crdt = crdtTypes[type as keyof typeof crdtTypes];
+    if (crdt && crdt.init) {
+      // Get initial data
+      const data = await crdt.init(ydoc.name);
+
+      // Apply id to the entry map to match frontend structure
+      if (data && data.id) {
+        ydoc.transact(() => {
+          const ymap = ydoc.getMap("entry");
+          ymap.set("id", data.id);
+        });
+      }
+
+      ydoc.isInitialized = true;
+
+      // Clear the undo stack after initialization
+      if (ydoc.undoManager) {
+        ydoc.undoManager.clear();
+      }
+    }
+  }
+};
 
 /**
  * This function is called once every time a Yjs document is created. You can
@@ -87,7 +147,9 @@ export class WSSharedDoc extends Y.Doc {
   name: string;
   conns: Map<ServerWebSocket<any>, Set<number>>;
   awareness: awarenessProtocol.Awareness;
+  undoManager?: UndoManager;
   whenInitialized: Promise<void>;
+  isInitialized: boolean = false;
   declare gc: boolean;
 
   /**
@@ -135,19 +197,25 @@ export class WSSharedDoc extends Y.Doc {
         }
       }
       // broadcast awareness update
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, messageAwareness);
-      encoding.writeVarUint8Array(
-        encoder,
-        awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
-      );
-      const buff = encoding.toUint8Array(encoder);
-      this.conns.forEach((_, c) => {
-        send(this, c, buff);
+      this.transact(() => {
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, messageAwareness);
+        encoding.writeVarUint8Array(
+          encoder,
+          awarenessProtocol.encodeAwarenessUpdate(
+            this.awareness,
+            changedClients
+          )
+        );
+        const buff = encoding.toUint8Array(encoder);
+        this.conns.forEach((_, c) => {
+          send(this, c, buff);
+        });
       });
     };
     this.awareness.on("update", awarenessChangeHandler);
     this.on("update", updateHandler as any);
+
     if (isCallbackSet && callbackHandler) {
       this.on(
         "update",
@@ -156,7 +224,10 @@ export class WSSharedDoc extends Y.Doc {
         }) as any
       );
     }
-    this.whenInitialized = contentInitializor(this);
+    this.whenInitialized = contentInitializor(this).catch((err) => {
+      console.error("Error initializing document:", err);
+      throw err;
+    });
   }
 }
 
@@ -170,6 +241,11 @@ export class WSSharedDoc extends Y.Doc {
 export const getYDoc = (docname: string, gc: boolean = true): WSSharedDoc =>
   map.setIfUndefined(docs, docname, () => {
     const doc = new WSSharedDoc(docname);
+    if (!doc.undoManager) {
+      // Create UndoManager targeting the entry map to match frontend binding
+      const entryMap = doc.getMap("entry");
+      doc.undoManager = new UndoManager(entryMap, { captureTimeout: 300 });
+    }
     doc.gc = gc;
     docs.set(docname, doc);
     return doc;
@@ -192,7 +268,9 @@ const messageListener = (
     switch (messageType) {
       case messageSync:
         encoding.writeVarUint(encoder, messageSync);
-        syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
+        doc.transact(() => {
+          syncProtocol.readSyncMessage(decoder, encoder, doc, ws);
+        });
 
         // If the `encoder` only contains the type of reply message and no
         // message, there is no need to send the message. When `encoder` only
@@ -207,6 +285,16 @@ const messageListener = (
           decoding.readVarUint8Array(decoder),
           ws
         );
+        break;
+      }
+      case messageUndoRedoReceived: {
+        const info = JSON.parse(decoding.readVarString(decoder));
+        if (info.action === "undo") {
+          doc.undoManager?.undo();
+        } else if (info.action === "redo") {
+          doc.undoManager?.redo();
+        }
+        doc.conns.forEach((_, conn) => sendUndoRedoStatus(doc, conn));
         break;
       }
     }
@@ -327,11 +415,16 @@ export const wsCrdt = {
       );
       send(doc, ws, encoding.toUint8Array(awarenessEncoder));
     }
+
+    // Send initial undo/redo status
+    doc.whenInitialized.then(() => {
+      sendUndoRedoStatus(doc, ws);
+    });
   },
 
   message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
     // Handle binary messages for Yjs protocol
-    if (message instanceof Buffer) {
+    if (message instanceof ArrayBuffer) {
       const docName = wsToDocMap.get(ws);
       if (docName) {
         const doc = docs.get(docName);
@@ -340,13 +433,28 @@ export const wsCrdt = {
         }
       }
     }
+    if (message === "undo" || message === "redo") {
+      const docName = wsToDocMap.get(ws);
+      if (docName) {
+        const doc = docs.get(docName);
+        if (doc) {
+          if (message === "undo") {
+            doc.undoManager?.undo();
+          } else if (message === "redo") {
+            doc.undoManager?.redo();
+          }
+          doc.conns.forEach((_, conn) => sendUndoRedoStatus(doc, conn));
+        }
+      }
+    }
+
     // Handle potential pong messages
     if (message === "pong") {
       pongReceivedFlags.set(ws, true);
     }
   },
 
-  close(ws: ServerWebSocket<WebSocketData>, code: number, reason: string) {
+  close(ws: ServerWebSocket<WebSocketData>) {
     // Clean up when connection closes
     const docName = wsToDocMap.get(ws);
     if (docName) {

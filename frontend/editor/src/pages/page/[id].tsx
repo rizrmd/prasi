@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/essentials/list/data-table";
 import { connectCRDT, type CRDT } from "@/lib/crdt";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
+import { useSnapshot } from "valtio";
 
 export default () => {
   const ref = useRef({
@@ -26,14 +26,37 @@ export default () => {
 
   return (
     <div className="p-5 flex flex-col space-y-2 items-start">
+      <Detail crdt={crdt} />
+    </div>
+  );
+};
+
+const Detail: FC<{ crdt: CRDT<any> }> = ({ crdt }) => {
+  const can = useSnapshot(crdt.can);
+  return (
+    <>
       <Button href="/">Back</Button>
       <div className="flex space-x-2">
         <Button
           onClick={() => {
-            crdt.write.A = "MANTAP";
+            crdt.write.A = "A";
           }}
         >
           Set A
+        </Button>
+        <Button
+          onClick={() => {
+            crdt.write.A = "B";
+          }}
+        >
+          Set B
+        </Button>
+        <Button
+          onClick={() => {
+            crdt.write.A = "C";
+          }}
+        >
+          Set C
         </Button>
         <Button
           onClick={() => {
@@ -45,23 +68,23 @@ export default () => {
 
         <Button
           onClick={() => {
-            crdt.undoManager.undo();
+            crdt.undo();
           }}
-          disabled={crdt.undoManager.canUndo()}
+          disabled={!can.undo}
         >
           Undo
         </Button>
 
         <Button
           onClick={() => {
-            crdt.undoManager.redo();
+            crdt.redo();
           }}
-          disabled={crdt.undoManager.canRedo()}
+          disabled={!can.redo}
         >
           Redo
         </Button>
       </div>
       {JSON.stringify(crdt.write)}
-    </div>
+    </>
   );
 };

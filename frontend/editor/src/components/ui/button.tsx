@@ -56,11 +56,15 @@ function Button({
       navigate(href);
     };
   }
+  const [pressed, setPressed] = React.useState(false);
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, className }), 'transition-all', pressed ? "opacity-50" : "")}
+      onPointerDown={() => setPressed(true)}
+      onPointerUp={() => setPressed(false)}
+      onPointerLeave={() => setPressed(false)}
       {...props}
     />
   );
