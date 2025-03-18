@@ -35,7 +35,7 @@ let callbackHandler: CallbackFn | null = (
     const type = doc.name.split("/")[0];
     const crdt = crdtTypes[type as keyof typeof crdtTypes];
     if (crdt && crdt.update) {
-      crdt.update(doc.name, origin);
+      crdt.update(doc.name, doc.getMap("entry").toJSON());
     }
   }
 };
@@ -98,6 +98,12 @@ const updateHandler = (
     send(doc, conn, message);
     sendUndoRedoStatus(doc, conn);
   });
+  // Call crdt.update immediately after applying the update
+  const type = doc.name.split("/")[0];
+  const crdt = crdtTypes[type as keyof typeof crdtTypes];
+  if (crdt && crdt.update) {
+    crdt.update(doc.name, doc.getMap("entry").toJSON());
+  }
 };
 
 /**

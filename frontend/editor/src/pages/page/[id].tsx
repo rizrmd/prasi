@@ -18,7 +18,10 @@ export default () => {
       },
     });
 
-    render({});
+    // Wait for the WebSocket connection to be established before initial render
+    if (ref.crdt.write) {
+      render({});
+    }
   }, []);
 
   const crdt = ref.crdt;
