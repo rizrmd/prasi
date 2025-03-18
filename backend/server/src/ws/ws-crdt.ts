@@ -1,16 +1,14 @@
-import * as Y from "yjs";
-import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
+import * as syncProtocol from "y-protocols/sync";
+import * as Y from "yjs";
 
-import * as encoding from "lib0/encoding"; 
 import * as decoding from "lib0/decoding";
+import * as encoding from "lib0/encoding";
 import * as map from "lib0/map";
-import { LeveldbPersistence } from "y-leveldb";
 
+import type { ServerWebSocket } from "bun";
 import debounce from "lodash.debounce";
 import type { WSHandler } from "server/utils/accept-ws";
-import type { ServerWebSocket } from "bun";
-import { dir } from "utils/dir";
 import type { WebSocketData } from "./typings";
 
 const CALLBACK_DEBOUNCE_WAIT = parseInt(
@@ -38,59 +36,8 @@ export const setCallback = (callback: CallbackFn | null): void => {
   isCallbackSet = callback !== null;
 };
 
-// disable gc when using snapshots!
 const gcEnabled = true;
-const persistenceDir = dir.path("data:cache/yjs");
-dir.ensure("data:cache/yjs");
-
-interface PersistenceProvider {
-  bindState: (docName: string, ydoc: WSSharedDoc) => Promise<void>;
-  writeState: (docName: string, ydoc: WSSharedDoc) => Promise<any>;
-  provider: any;
-}
-
-/**
- * @type {PersistenceProvider|null}
- */
-let persistence: PersistenceProvider | null = null;
-
-if (typeof persistenceDir === "string") {
-  const ldb = new LeveldbPersistence(persistenceDir);
-  persistence = {
-    provider: ldb,
-    bindState: async (docName: string, ydoc: WSSharedDoc) => {
-      const persistedYdoc = await ldb.getYDoc(docName);
-      const newUpdates = Y.encodeStateAsUpdate(ydoc);
-      ldb.storeUpdate(docName, newUpdates);
-      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(persistedYdoc));
-      ydoc.on("update", (update: Uint8Array) => {
-        ldb.storeUpdate(docName, update);
-      });
-    },
-    writeState: async (_docName: string, _ydoc: WSSharedDoc) => {},
-  };
-}
-
-/**
- * @param {PersistenceProvider|null} persistence_
- */
-export const setPersistence = (
-  persistence_: PersistenceProvider | null
-): void => {
-  persistence = persistence_;
-};
-
-/**
- * @return {PersistenceProvider|null} used persistence layer
- */
-export const getPersistence = (): PersistenceProvider | null => persistence;
-
-/**
- * @type {Map<string, WSSharedDoc>}
- */
 const docs = new Map<string, WSSharedDoc>();
-// exporting docs so that others can use it
-export { docs };
 
 // Map to associate WebSocket connections with document names
 const wsToDocMap = new Map<ServerWebSocket<any>, string>();
@@ -224,9 +171,6 @@ export const getYDoc = (docname: string, gc: boolean = true): WSSharedDoc =>
   map.setIfUndefined(docs, docname, () => {
     const doc = new WSSharedDoc(docname);
     doc.gc = gc;
-    if (persistence !== null) {
-      persistence.bindState(docname, doc);
-    }
     docs.set(docname, doc);
     return doc;
   });
@@ -284,11 +228,9 @@ const closeConn = (doc: WSSharedDoc, ws: ServerWebSocket<any>): void => {
       Array.from(controlledIds),
       null
     );
-    if (doc.conns.size === 0 && persistence !== null) {
+    if (doc.conns.size === 0) {
       // if persisted, we store state and destroy ydocument
-      persistence.writeState(doc.name, doc).then(() => {
-        doc.destroy();
-      });
+      doc.destroy();
       docs.delete(doc.name);
     }
   }

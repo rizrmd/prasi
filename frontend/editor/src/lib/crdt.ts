@@ -12,7 +12,12 @@ export type DeepReadonly<T> = T extends Function
 export type CRDT<T extends Record<string, unknown>> = {
   write: T;
   destroy: () => void;
-  undoManager: Y.UndoManager;
+  undoManager: {
+    undo: () => void;
+    canUndo: () => boolean;
+    redo: () => void;
+    canRedo: () => boolean;
+  };
 };
 
 export const connectCRDT = <T extends Record<string, unknown>>({
@@ -42,5 +47,18 @@ export const connectCRDT = <T extends Record<string, unknown>>({
     ws.disconnect();
     ydoc.destroy();
   };
-  return { write, destroy } as CRDT<T>;
+  return {
+    write,
+    destroy,
+    undoManager: {
+      undo: () => {},
+      canUndo: () => {
+        return false;
+      },
+      redo: () => {},
+      canRedo: () => {
+        return false;
+      },
+    },
+  } as CRDT<T>;
 };
