@@ -25,7 +25,7 @@ const CRDT_MESSAGE = {
   AWARENESS: 1,
   UNDO: 2,
   REDO: 3,
-  HISTORY_INFO: 3
+  HISTORY_INFO: 3,
 } as const;
 
 export const connectCRDT = <T extends Record<string, unknown>>({
@@ -45,10 +45,10 @@ export const connectCRDT = <T extends Record<string, unknown>>({
 
   const sync = new WebsocketProvider(url.toString(), `${type}/${id}`, ydoc);
   const ymap = ydoc.getMap("entry");
-  const write = proxy({}) as T;
-  const undoCan = proxy({ undo: true, redo: true });
-  bind(write, ymap);
 
+  const undoCan = proxy({ undo: true, redo: true });
+  const write = proxy(ymap.toJSON()) as T;
+  bind(write, ymap);
   subscribe(write, () => {
     render();
   });
