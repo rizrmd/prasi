@@ -9,12 +9,11 @@ import { routePrasiLayout } from "./routes/prasi/layout";
 import { routePrasiPage } from "./routes/prasi/page";
 import { routePrasiPages } from "./routes/prasi/pages";
 import { routeProd } from "./routes/prod";
-import { acceptWS } from "./utils/accept-ws";
+import { acceptWS, routerWS } from "./utils/accept-ws";
 import { g } from "./utils/global";
 import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
-import { wsRouter } from "./ws";
 import type { WebSocketData } from "./ws/typings";
 
 initServer();
@@ -57,6 +56,7 @@ const jsEditor = staticFile({
 g.server = Bun.serve({
   port: 4550,
   routes: {
+    "/log/:site_id": async (req: Request) => jsBase.serve(req),
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
     "/_prasi/:site_id/layout": routePrasiLayout,
@@ -65,28 +65,10 @@ g.server = Bun.serve({
     "/_prasi/:site_id/page/:page_id": routePrasiPage,
     "/_prasi/:site_id/info": routePrasiInfo,
     "/_crdt/:type/:id": acceptWS({ route: "crdt" }),
+    "/_prasi/:site_id/logger": acceptWS({ route: "site-logger" }),
     "/_prasi/:site_id/loading": acceptWS({ route: "site-loading" }),
   },
-  websocket: {
-    open(ws) {
-      const route = wsRouter[ws.data.route as keyof typeof wsRouter];
-      if (route) {
-        route.open(ws);
-      }
-    },
-    async message(ws, message) {
-      const route = wsRouter[ws.data.route as keyof typeof wsRouter];
-      if (route) {
-        route.message(ws, message);
-      }
-    },
-    close(ws, code, reason) {
-      const route = wsRouter[ws.data.route as keyof typeof wsRouter];
-      if (route) {
-        route.close(ws, code, reason);
-      }
-    },
-  },
+  websocket: routerWS,
   fetch(request, server) {
     const editorResult = jsEditor.serve(request);
     if (editorResult.status !== 404) {

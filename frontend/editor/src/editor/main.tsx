@@ -1,12 +1,18 @@
 import Dock from "@/components/ui/dock";
+import { Spinner } from "@/components/ui/spinner";
+import { writeLayout } from "@/editor/state/layout";
 import { type CRDT } from "@/lib/crdt";
-import { writeLayout } from "@/lib/editor-layout";
 import type { PageContent } from "frontend/base/src/site/router";
 import { type FC } from "react";
 import { useSnapshot } from "valtio";
+import { EditorPreview } from "./preview";
 
 export const EditorMain: FC<{ crdt: CRDT<PageContent> }> = ({ crdt }) => {
   const readLayout = useSnapshot(writeLayout);
+  const read = useSnapshot(crdt.write);
+
+  if (!read.id) return <Spinner size="lg" />;
+
   return (
     <>
       <Dock
@@ -27,7 +33,7 @@ export const EditorMain: FC<{ crdt: CRDT<PageContent> }> = ({ crdt }) => {
           `
         )}
       >
-        Halo world
+        <EditorPreview crdt={crdt} />
       </div>
       <Dock
         position="right"

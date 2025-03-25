@@ -34,39 +34,61 @@ async function getOutputSources(output: BuildOutput) {
 
 type BuildConfig = Parameters<typeof Bun.build>[0] & {
   watch?: string;
-  onBuild?: (output: BuildOutput) => void;
+  onBuildStart?: () => void;
+  onBuildEnd?: (output?: string[]) => void;
 };
 
 export async function bundleBun(config: BuildConfig) {
-  let { watch, onBuild, sourcemap = "external", ...rest } = config;
-  if (watch && config.sourcemap !== "external") {
-    console.error("Watch requires external sourcemap, setting to external");
+  let {
+    watch,
+    onBuildEnd,
+    onBuildStart,
+    sourcemap = "external",
+    ...rest
+  } = config;
+  let output = undefined as BuildOutput | undefined;
+
+  let logs = [] as string[];
+  try {
+    output = await Bun.build({ ...rest, sourcemap });
+  } catch (e) {
+    logs = Bun.inspect(e).split("\n");
   }
-  let output = await Bun.build({ ...rest, sourcemap });
 
   if (watch) {
-    let sources = await getOutputSources(output);
+    let sources =
+      typeof output === "undefined"
+        ? new Set()
+        : await getOutputSources(output);
     let debounce: Timer | null = null;
     let pending = false;
 
     const rebuild = async () => {
       if (pending) return;
       pending = true;
-      output = await Bun.build({ ...rest, sourcemap });
-      sources = await getOutputSources(output);
-      onBuild && onBuild(output);
+
+      onBuildStart && onBuildStart();
+      try {
+        output = await Bun.build({ ...rest, sourcemap });
+        sources = await getOutputSources(output);
+        onBuildEnd && onBuildEnd();
+      } catch (e) {
+        logs = Bun.inspect(e).split("\n");
+        onBuildEnd && onBuildEnd(logs);
+      }
       pending = false;
     };
 
     fs.watch(watch, { recursive: true }, (event, filename) => {
       if (!filename) return;
       const source = absolute(join(watch, filename));
-      if (!sources.has(source)) return;
+      if (!sources.has(source) && sources.size > 0) return;
       if (debounce) clearTimeout(debounce);
       debounce = setTimeout(rebuild, 50);
     });
   }
 
-  onBuild && onBuild(output);
+  onBuildStart && onBuildStart();
+  onBuildEnd && onBuildEnd(logs);
   return output;
 }

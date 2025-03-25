@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/ui/spinner";
 import { EditorMain } from "@/editor/main";
 import { connectCRDT, type CRDT } from "@/lib/crdt";
 import { useEffect, useRef, useState } from "react";
@@ -24,7 +25,7 @@ export default () => {
   }, []);
 
   const crdt = ref.crdt;
-  if (!crdt) return null;
+  if (!crdt) return <Spinner size="lg" />;
 
   return <EditorMain crdt={crdt} />;
 };

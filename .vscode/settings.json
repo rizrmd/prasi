@@ -15,5 +15,8 @@
     "frontend/editor/src/generated/*": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "hide-files.files": []
+  "hide-files.files": [],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
 }

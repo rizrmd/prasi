@@ -2,13 +2,15 @@ import { join } from "node:path";
 import { staticFile } from "utils/server/static";
 import { argv } from "utils/src/argv";
 import { g } from "./global";
+import { prasiDB } from "./prasi/db-remote";
+import { proxy } from "./prasi/proxy";
 import { site } from "./site";
 import { staticInfo } from "./static";
-import { prasiDB } from "./prasi/db-remote";
-import chalk from "chalk";
-import { proxy } from "./prasi/proxy";
+import { dir } from "utils/dir";
 
 const main = async () => {
+  process.stdout.write(`▒▒▒`);
+
   const port = argv.get("--port");
   const site_id = argv.get("--id");
   const site_url = argv.get("--url");
@@ -43,9 +45,16 @@ const main = async () => {
   try {
     await prasiDB(site.url);
 
-    g.backend = await import(join(sinfo.backend, "server.js"));
-    if (g.backend?.server?.init) {
-      await g.backend.server.init();
+    if (dir.exists(join(sinfo.backend, "server.js"))) {
+      g.backend = await import(join(sinfo.backend, "server.js"));
+      if (g.backend?.server?.init) {
+        await g.backend.server.init();
+      }
+    } else {
+      console.error(
+        "Failed to load backend:",
+        join(sinfo.backend, "server.js")
+      );
     }
   } catch (e) {
     console.error(e);
@@ -83,7 +92,7 @@ const main = async () => {
     },
   });
 
-  console.log(`🚀 Started ${chalk.green(site.id)} ~> http://localhost:${port}`);
+  console.log(`🚀 Server Started`);
 
   process.on("SIGINT", () => {
     g.shutting_down = true;

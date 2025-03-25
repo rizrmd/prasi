@@ -8,17 +8,9 @@ import * as encoding from "lib0/encoding";
 import * as map from "lib0/map";
 
 import type { ServerWebSocket } from "bun";
-import debounce from "lodash.debounce";
 import type { WSHandler } from "server/utils/accept-ws";
 import { crdtTypes } from "../crdt/crdt-types";
 import type { WebSocketData } from "./typings";
-
-const CALLBACK_DEBOUNCE_WAIT = parseInt(
-  process.env.CALLBACK_DEBOUNCE_WAIT || "2000"
-);
-const CALLBACK_DEBOUNCE_MAXWAIT = parseInt(
-  process.env.CALLBACK_DEBOUNCE_MAXWAIT || "10000"
-);
 
 const wsReadyStateConnecting = 0;
 const wsReadyStateOpen = 1;
@@ -26,29 +18,8 @@ const wsReadyStateClosing = 2; // eslint-disable-line
 const wsReadyStateClosed = 3; // eslint-disable-line
 
 type CallbackFn = (update: Uint8Array, origin: any, doc: Y.Doc) => void;
-let callbackHandler: CallbackFn | null = (
-  update: Uint8Array,
-  origin: any,
-  doc: Y.Doc
-) => {
-  if (doc instanceof WSSharedDoc) {
-    const type = doc.name.split("/")[0];
-    const crdt = crdtTypes[type as keyof typeof crdtTypes];
-    if (crdt && crdt.update) {
-      crdt.update(doc.name, doc.getMap("entry").toJSON());
-    }
-  }
-};
-let isCallbackSet = true;
 
-/**
- * Set a callback that is called whenever the document is updated.
- * @param {CallbackFn} callback
- */
-export const setCallback = (callback: CallbackFn | null): void => {
-  callbackHandler = callback;
-  isCallbackSet = callback !== null;
-};
+const updateTimeout = {} as Record<string, Timer>;
 
 const gcEnabled = true;
 const docs = new Map<string, WSSharedDoc>();
@@ -102,7 +73,10 @@ const updateHandler = (
   const type = doc.name.split("/")[0];
   const crdt = crdtTypes[type as keyof typeof crdtTypes];
   if (crdt && crdt.update) {
-    crdt.update(doc.name, doc.getMap("entry").toJSON());
+    clearTimeout(updateTimeout[doc.name]);
+    updateTimeout[doc.name] = setTimeout(() => {
+      crdt.update(doc.name, doc.getMap("entry").toJSON());
+    }, 2000);
   }
 };
 
@@ -123,7 +97,9 @@ let contentInitializor: (ydoc: Y.Doc) => Promise<void> = async (
       if (data && data.id) {
         ydoc.transact(() => {
           const ymap = ydoc.getMap("entry");
-          ymap.set("id", data.id);
+          for (const [k, v] of Object.entries(data)) {
+            ymap.set(k, v);
+          }
         });
       }
 
@@ -222,14 +198,6 @@ export class WSSharedDoc extends Y.Doc {
     this.awareness.on("update", awarenessChangeHandler);
     this.on("update", updateHandler as any);
 
-    if (isCallbackSet && callbackHandler) {
-      this.on(
-        "update",
-        debounce(callbackHandler, CALLBACK_DEBOUNCE_WAIT, {
-          maxWait: CALLBACK_DEBOUNCE_MAXWAIT,
-        }) as any
-      );
-    }
     this.whenInitialized = contentInitializor(this).catch((err) => {
       console.error("Error initializing document:", err);
       throw err;

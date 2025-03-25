@@ -3,4 +3,5 @@ export const pageModules: Record<string, () => Promise<any>> = {
   "/": () => import("@/pages"),
   "/page/[id]": () => import("@/pages/page/[id]"),
   "/site/[id]": () => import("@/pages/site/[id]"),
+  "/log/[id]": () => import("@/pages/log/[id]"),
 };

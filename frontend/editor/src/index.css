@@ -130,3 +130,24 @@ body,
     @apply bg-background text-foreground;
   }
 }
+
+@property --spinner-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@keyframes spinner {
+  0% { --spinner-opacity: 1 }
+  10% { --spinner-opacity: 0.7 }
+  20% { --spinner-opacity: 0.3 }
+  35% { --spinner-opacity: 0.2 }
+  50% { --spinner-opacity: 0.1 }
+  75% { --spinner-opacity: 0.05 }
+  100% { --spinner-opacity: 0 }
+}
+
+.animate-spinner {
+  animation: spinner 1s linear infinite;
+  opacity: var(--spinner-opacity);
+}

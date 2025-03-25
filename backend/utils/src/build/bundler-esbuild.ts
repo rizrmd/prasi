@@ -94,7 +94,7 @@ export const bundleEsbuild = async (
   return {
     files,
     rebuild: async () => {
-      await ctx.rebuild();
+      return await ctx.rebuild();
     },
   };
 };

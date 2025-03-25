@@ -64,6 +64,7 @@ export const run = async (
     pipe?: (output: string) => string | void;
     cwd?: string;
     started?: (proc: Subprocess) => void;
+    exited?: (code: number) => void
     stdin?: "ignore" | "pipe" | "inherit";
     ipc?: {
       onMessage: (message: unknown) => void;
@@ -246,6 +247,7 @@ export const run = async (
     proc.exited
       .then((code: number | null) => {
         cleanup();
+        if (arg?.exited) arg.exited(code || 0);
         if (code === 0) {
           resolve();
         } else {

@@ -1,4 +1,3 @@
-import type { WebSocketHandler } from "bun";
 import { Site } from "prasi/site";
 import type { WSHandler } from "server/utils/accept-ws";
 
