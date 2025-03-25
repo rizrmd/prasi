@@ -23,8 +23,5 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.0.14"
-  },
-  "patchedDependencies": {
-    "y-leveldb@0.1.2": "patches/y-leveldb@0.1.2.patch"
   }
 }

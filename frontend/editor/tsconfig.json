@@ -3,7 +3,9 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "utils/*": ["../../backend/utils/src/*"],
+      "frontend/*": ["../../frontend/*"]
     },
     "types": ["../base/src/libs/global.d.ts"]
   }

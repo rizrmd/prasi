@@ -3,9 +3,9 @@
     "**/.git": true,
     "**/.svn": true,
     "**/.hg": true,
-    "**/CVS": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
+    "**/CVS": true,
     ".vscode": true,
     "node_modules": true,
     ".gitignore": true,
@@ -14,5 +14,6 @@
     "frontend/editor/src/generated": true,
     "frontend/editor/src/generated/*": true
   },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "hide-files.files": []
 }

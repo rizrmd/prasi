@@ -5,9 +5,9 @@ export const root = {
   render: () => {},
 };
 
-export const EditorRoot = () => {
+export const Root = () => {
   const render = useState({})[1];
   root.render = () => render({});
 
-  return <div className="bg-amber-200 flex-1 select-none">{root.page}</div>;
+  return root.page;
 };

@@ -1,7 +1,7 @@
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
-import { UndoManager, Transaction } from "yjs";
+import { UndoManager } from "yjs";
 
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
@@ -10,8 +10,8 @@ import * as map from "lib0/map";
 import type { ServerWebSocket } from "bun";
 import debounce from "lodash.debounce";
 import type { WSHandler } from "server/utils/accept-ws";
-import type { WebSocketData } from "./typings";
 import { crdtTypes } from "../crdt/crdt-types";
+import type { WebSocketData } from "./typings";
 
 const CALLBACK_DEBOUNCE_WAIT = parseInt(
   process.env.CALLBACK_DEBOUNCE_WAIT || "2000"
