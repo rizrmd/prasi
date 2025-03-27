@@ -11,6 +11,9 @@ import { gunzipSync } from "fflate";
 import { unpack } from "msgpackr";
 import { useEffect, type FC, type ReactNode } from "react";
 import { ref, useSnapshot } from "valtio";
+import { PrismaClient } from "@prisma/client";
+import { enhancePrisma } from "utils/prisma";
+
 export default () => {
   const readLogger = useSnapshot(writeLogger);
   useEffect(() => {
@@ -29,6 +32,9 @@ export default () => {
           writeLogger.status = "loading";
           writeLogger.server.startup = msg.message;
         } else if (msg.status === "init") {
+          db.site.findFirst({ where: { id: params.id } }).then((e) => {
+            console.log(e);
+          });
           writeLogger.status = "ready";
           writeLogger.frontend.logs = msg.frontend;
           writeLogger.backend.logs = msg.backend;

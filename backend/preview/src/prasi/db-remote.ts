@@ -27,11 +27,12 @@ export const prasiDB = async (url: string) => {
         } else {
           const res = await fetch(target, {
             method,
-            body, 
+            body,
           });
           return await res.json();
         }
       },
     });
+  } else {
   }
 };

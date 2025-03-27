@@ -17,6 +17,9 @@ window.initSite({
         for (const [pattern, loader] of Object.entries(pageModules)) {
           const routePattern = parsePattern(pattern);
           const params = matchRoute(path, routePattern);
+          if (pattern.includes("~")) {
+            console.log(pattern, path, routePattern, params);
+          }
           if (params) {
             pageLoader = loader;
             matchedParams = params;

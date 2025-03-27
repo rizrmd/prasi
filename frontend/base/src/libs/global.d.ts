@@ -7,6 +7,8 @@ import { navigate as import_navigate } from "./navigate";
 import { css as import_css } from "goober";
 import { cx as import_cx } from "./cx";
 import type { createViWrite } from "src/prasi/vi/vi-state";
+import type { db as import_db } from "backend/db/use";
+import type { enhancePrisma } from "utils/prisma";
 declare global {
   interface Window {
     React: typeof ReactTypes;
@@ -20,7 +22,7 @@ declare global {
     css: typeof import_css;
     cx: typeof import_cx;
     cn: typeof import_cx;
-    db: ReturnType<typeof import_dbInstance>;
+    db: ReturnType<typeof enhancePrisma>;
     preload: typeof import_navigate.preload;
     siteurl: typeof import_navigate.siteurl;
     preloaded: typeof import_navigate.preloaded;
@@ -48,7 +50,7 @@ declare global {
   const css = import_css;
   const cn = import_cx;
   const cx = import_cx;
-  const db = import_dbInstance();
+  const db = enhancePrisma(new PrismaClient());
   const baseurl = import_navigate.baseurl;
   const siteurl = import_navigate.siteurl;
   const preload = import_navigate.preload;

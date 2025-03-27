@@ -37,17 +37,20 @@ export function parsePattern(pattern: string): RoutePattern {
   const regexParts = patternParts.map((part) => {
     // Find all parameter patterns like [id] in the part
     const matches = part.match(/\[([^\]]+)\]/g);
+    let processedPart = part;
     if (matches) {
-      let processedPart = part;
       matches.forEach((match) => {
         const paramName = match.slice(1, -1);
         paramNames.push(paramName);
         // Replace [param] with capture group, preserve surrounding text
         processedPart = processedPart.replace(match, "([^/]+)");
       });
-      return processedPart;
     }
-    return part;
+    // Handle wildcard ~ character (standalone or after parameters)
+    if (processedPart.endsWith("~")) {
+      return processedPart.slice(0, -1) + ".*";
+    }
+    return processedPart;
   });
 
   return {

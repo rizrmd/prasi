@@ -316,7 +316,7 @@ export const Site = {
   async startServer(site_id: string, site_url: string, port: number) {
     let resolved = false;
     await new Promise<void>((resolve) => {
-      const path = dir.path("backend:deploy/src/start.ts");
+      const path = dir.path("backend:preview/src/start.ts");
       const cwd = dir.path(`data:code/${site_id}/site/dist/backend`);
       if (!dir.exists(path) || !dir.exists(cwd)) {
         delete this.loading[site_id];

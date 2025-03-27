@@ -10,8 +10,14 @@ export const dbInstance = () => {
       target.pathname =
         window.prasi_site.baseurl +
         "/_proxy/" +
-        window.prasi_site.siteurl.substring("https://".length) +
+        (window.prasi_site.siteurl.startsWith("https")
+          ? window.prasi_site.siteurl.substring("https://".length)
+          : window.prasi_site.siteurl) +
         pathname;
+
+      if (window.prasi_site.siteurl === "prasi.avolut.com") {
+        target.pathname = pathname;
+      }
 
       if (mode === "msgpack") {
         const res = await fetch(target, {

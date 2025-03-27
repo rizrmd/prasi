@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { dir } from "utils/dir";
 import { staticFile } from "utils/server/static";
 import { argv } from "utils/src/argv";
 import { g } from "./global";
@@ -6,7 +7,6 @@ import { prasiDB } from "./prasi/db-remote";
 import { proxy } from "./prasi/proxy";
 import { site } from "./site";
 import { staticInfo } from "./static";
-import { dir } from "utils/dir";
 
 const main = async () => {
   process.stdout.write(`▒▒▒`);
