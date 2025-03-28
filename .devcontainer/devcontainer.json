@@ -18,6 +18,7 @@
     }
   },
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/meaningful-ooo/devcontainer-features/fish:2.0.0": {}
   }
 }
