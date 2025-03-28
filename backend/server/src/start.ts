@@ -9,6 +9,7 @@ import { routePrasiLayout } from "./routes/prasi/layout";
 import { routePrasiPage } from "./routes/prasi/page";
 import { routePrasiPages } from "./routes/prasi/pages";
 import { routeProd } from "./routes/prod";
+import { routeDb } from "./routes/route-db";
 import { acceptWS, routerWS } from "./utils/accept-ws";
 import { g } from "./utils/global";
 import { initServer } from "./utils/init";
@@ -21,7 +22,8 @@ initServer();
 if (argv.has("--dev")) {
   initDev();
 } else {
-  initProd();
+  console.log(`Building ${chalk.blue("production")} bundle...`);
+  await initProd();
 }
 
 const jsBase = staticFile({
@@ -59,6 +61,7 @@ g.server = Bun.serve({
     "/log/:site_id": async (req: Request) => jsBase.serve(req),
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
+    "/_dbs/*": routeDb,
     "/_prasi/:site_id/layout": routePrasiLayout,
     "/_prasi/:site_id/components": routePrasiComponents,
     "/_prasi/:site_id/pages": routePrasiPages,

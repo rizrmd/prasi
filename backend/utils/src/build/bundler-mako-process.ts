@@ -1,6 +1,6 @@
 /**
- * bundler-mako cannot be used to build site frontend, because of it always output iife.
- * We need to output esm for the frontend.
+ * bundler-mako cannot be used to build site, because of it always output iife.
+ * We need to output esm for the site. we only use this to build prasi editor frontend.
  */
 import { build, type BuildParams } from "@umijs/mako";
 import { join } from "path";

@@ -201,6 +201,7 @@ export const run = async (
       running.delete(validatedCommand);
     };
 
+
     // Handle output based on mode
     if (arg?.mode === "pipe") {
       const handleOutput = async (
