@@ -12,7 +12,8 @@
     "bun.lock": true,
     "package-lock.json": true,
     "frontend/editor/src/generated": true,
-    "frontend/editor/src/generated/*": true
+    "frontend/editor/src/generated/*": true,
+    ".devcontainer": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "hide-files.files": [],

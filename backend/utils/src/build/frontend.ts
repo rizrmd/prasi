@@ -5,6 +5,7 @@ import trim from "lodash/trim";
 import type { BuildParams } from "@umijs/mako";
 import { run } from "utils/run";
 import { dir } from "utils/dir";
+import { g } from "server/utils/global";
 
 const config: BuildParams["config"] = {
   platform: "browser",
@@ -51,6 +52,7 @@ export const frontend = {
       config: {
         devServer: false,
         hmr: false,
+        clean: !g.is_restarted,
         ...config,
         ...arg.config,
       },

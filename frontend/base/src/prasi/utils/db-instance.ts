@@ -1,10 +1,12 @@
 import { pack } from "msgpackr";
 import Pako from "pako";
 import { dbProxy } from "utils/db-proxy";
+import { model } from "../model/instance";
 
 export const dbInstance = () => {
   return dbProxy({
     gzip: Pako.gzip,
+    model,
     async fetch({ method, pathname, body, mode }) {
       const target = new URL(location.href);
       target.pathname =
@@ -30,7 +32,7 @@ export const dbInstance = () => {
         const res = await fetch(target, {
           method,
           headers: { "x-proxy-header": "none" },
-          body,
+          body: JSON.stringify(body),
         });
         return await res.json();
       }

@@ -16,16 +16,16 @@ import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import type { WebSocketData } from "./ws/typings";
-
-initServer();
-
+ 
+initServer(); 
+ 
 if (argv.has("--dev")) {
-  initDev();
+  await initDev();
 } else {
   console.log(`Building ${chalk.blue("production")} bundle...`);
   await initProd();
-}
-
+}  
+  
 const jsBase = staticFile({
   baseDir: dir.path(`data:frontend/base`),
   pathPrefix: "/js/base",
@@ -72,12 +72,13 @@ g.server = Bun.serve({
     "/_prasi/:site_id/loading": acceptWS({ route: "site-loading" }),
   },
   websocket: routerWS,
-  fetch(request, server) {
-    const editorResult = jsEditor.serve(request);
+  fetch(req, server) {
+    const editorResult = jsEditor.serve(req);
+
     if (editorResult.status !== 404) {
       return editorResult;
     }
-    return jsBase.serve(request);
+    return jsBase.serve(req);
   },
 } as WebSocketServeOptions<WebSocketData>);
 

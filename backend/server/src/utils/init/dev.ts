@@ -19,31 +19,36 @@ export const initDev = async () => {
     dir.ensure("data:frontend/base");
     dir.ensure("data:frontend/editor");
 
-    await frontend.dev({
-      root: dir.path("frontend:base"),
-      entryfile: dir.path("frontend:base/src/index.tsx"),
-      outdir: dir.path("data:frontend/base"),
-      config: {
-        externals: undefined,
-      },
-    });
-    frontend.tailwind({
-      root: dir.path("frontend:base/src/"),
-      input: dir.path("frontend:base/src/index.css"),
-      output: dir.path("data:frontend/base/main.css"),
-      mode: "dev",
-    });
+    const building = Promise.all([
+      frontend.dev({
+        root: dir.path("frontend:base"),
+        entryfile: dir.path("frontend:base/src/index.tsx"),
+        outdir: dir.path("data:frontend/base"),
+        config: {
+          externals: undefined,
+        },
+      }),
+      frontend.tailwind({
+        root: dir.path("frontend:base/src/"),
+        input: dir.path("frontend:base/src/index.css"),
+        output: dir.path("data:frontend/base/main.css"),
+        mode: "dev",
+      }),
+      frontend.dev({
+        root: dir.path("frontend:editor"),
+        entryfile: dir.path("frontend:editor/src/index.tsx"),
+        outdir: dir.path("data:frontend/editor"),
+      }),
+      frontend.tailwind({
+        root: dir.path("frontend:editor/src/"),
+        input: dir.path("frontend:editor/src/index.css"),
+        output: dir.path("data:frontend/editor/main.css"),
+        mode: "dev",
+      }),
+    ]);
 
-    frontend.dev({
-      root: dir.path("frontend:editor"),
-      entryfile: dir.path("frontend:editor/src/index.tsx"),
-      outdir: dir.path("data:frontend/editor"),
-    });
-    frontend.tailwind({
-      root: dir.path("frontend:editor/src/"),
-      input: dir.path("frontend:editor/src/index.css"),
-      output: dir.path("data:frontend/editor/main.css"),
-      mode: "dev",
-    });
+    if (!g.is_restarted) {
+      await building;
+    }
   }
 };

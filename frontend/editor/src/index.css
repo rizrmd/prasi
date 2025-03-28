@@ -138,13 +138,27 @@ body,
 }
 
 @keyframes spinner {
-  0% { --spinner-opacity: 1 }
-  10% { --spinner-opacity: 0.7 }
-  20% { --spinner-opacity: 0.3 }
-  35% { --spinner-opacity: 0.2 }
-  50% { --spinner-opacity: 0.1 }
-  75% { --spinner-opacity: 0.05 }
-  100% { --spinner-opacity: 0 }
+  0% {
+    --spinner-opacity: 1;
+  }
+  10% {
+    --spinner-opacity: 0.7;
+  }
+  20% {
+    --spinner-opacity: 0.3;
+  }
+  35% {
+    --spinner-opacity: 0.2;
+  }
+  50% {
+    --spinner-opacity: 0.1;
+  }
+  75% {
+    --spinner-opacity: 0.05;
+  }
+  100% {
+    --spinner-opacity: 0;
+  }
 }
 
 .animate-spinner {

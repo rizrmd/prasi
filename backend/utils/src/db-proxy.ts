@@ -1,8 +1,20 @@
+import { modifyQueryParamsToMatchModel, storeModelResult } from "./db-model";
+
+export type TABLE_NAME = string;
+export type ID = string;
+export type ROW = Record<string, any>;
+
+export type Model = {
+  cache: Record<TABLE_NAME, Record<ID, ROW>>;
+};
+
 export const dbProxy = ({
   fetch,
+  model,
   gzip,
 }: {
   gzip: (data: any) => Uint8Array;
+  model?: Model;
   fetch: (arg: {
     pathname: string;
     method: "GET" | "POST";
@@ -148,16 +160,37 @@ export const dbProxy = ({
                   action = "query";
                 }
                 await check();
-                return await fetch({
+
+                let finalParams = params;
+                if (model) {
+                  finalParams = modifyQueryParamsToMatchModel({
+                    action,
+                    table,
+                    params,
+                  });
+                }
+
+                const result = await fetch({
                   pathname: `/_dbs/${table}.${action}`,
                   mode: config.mode,
                   method: "POST",
                   body: {
                     action,
                     table,
-                    params,
+                    params: finalParams,
                   },
                 });
+
+                if (model) {
+                  storeModelResult({
+                    action,
+                    table,
+                    params: finalParams,
+                    result,
+                  });
+                }
+
+                return result;
               };
             },
           }
