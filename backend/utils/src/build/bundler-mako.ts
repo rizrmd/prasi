@@ -5,7 +5,7 @@ import { dir } from "utils/dir";
 export const bundleMako = async (
   arg: BuilderArg & {
     name: string;
-    logs?: (log: string) => string | void;
+    logs?: (log: string, arg: { completed: boolean }) => string | void;
   }
 ) => {
   let completed = false;
@@ -22,7 +22,7 @@ export const bundleMako = async (
             resolve();
           }
           if (arg.logs) {
-            const log = arg.logs(output);
+            const log = arg.logs(output, { completed });
             if (log) {
               process.stdout.write(log);
             }

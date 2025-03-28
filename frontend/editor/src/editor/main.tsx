@@ -1,15 +1,14 @@
 import Dock from "@/components/ui/dock";
 import { Spinner } from "@/components/ui/spinner";
-import { writeLayout } from "@/editor/state/layout";
-import { type CRDT } from "@/lib/crdt";
-import type { PageContent } from "frontend/base/src/site/router";
+import { editorState, writeLayout } from "@/editor/state/layout";
 import { type FC } from "react";
 import { useSnapshot } from "valtio";
+import { LeftDock } from "./dock/left";
 import { EditorPreview } from "./preview";
 
-export const EditorMain: FC<{ crdt: CRDT<PageContent> }> = ({ crdt }) => {
+export const EditorMain: FC = () => {
   const readLayout = useSnapshot(writeLayout);
-  const read = useSnapshot(crdt.write);
+  const read = useSnapshot(editorState.crdt.write);
 
   if (!read.id) return <Spinner size="lg" />;
 
@@ -19,11 +18,19 @@ export const EditorMain: FC<{ crdt: CRDT<PageContent> }> = ({ crdt }) => {
         position="left"
         isVisible={true}
         dimMode="none"
-        size={readLayout.left.size}
+        size={
+          parseFloat(localStorage.getItem("prasi.editor.left.size") || "0") ||
+          readLayout.left.size
+        }
         onSizeChange={(size) => {
-          if (size > 0.05) writeLayout.left.size = size;
+          if (size > 0.09) {
+            writeLayout.left.size = size;
+            localStorage.setItem("prasi.editor.left.size", size.toString());
+          }
         }}
-      ></Dock>
+      >
+        <LeftDock />
+      </Dock>
       <div
         className={cn(
           "flex flex-1 w-full h-full bg-amber-100",
@@ -33,7 +40,7 @@ export const EditorMain: FC<{ crdt: CRDT<PageContent> }> = ({ crdt }) => {
           `
         )}
       >
-        <EditorPreview crdt={crdt} />
+        <EditorPreview />
       </div>
       <Dock
         position="right"

@@ -6,6 +6,9 @@
       "@/*": [
         "./src/*"
       ],
+      "base/*": [
+        "../base/src/*"
+      ],
       "utils/*": [
         "../../backend/utils/src/*"
       ],

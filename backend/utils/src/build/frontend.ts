@@ -6,7 +6,8 @@ import type { BuildParams } from "@umijs/mako";
 import { run } from "utils/run";
 import { dir } from "utils/dir";
 import { g } from "server/utils/global";
-
+import { padEnd } from "lodash";
+import chalk from "chalk";
 const config: BuildParams["config"] = {
   platform: "browser",
   externals: {
@@ -23,9 +24,9 @@ export const frontend = {
   }) => {
     if (arg.mode === "dev") {
       run(
-        `bun run --silent ${dir.path("root:node_modules/.bin/tailwindcss")} -i ${
-          arg.input
-        } -o ${arg.output} -w -m`,
+        `bun run --silent ${dir.path(
+          "root:node_modules/.bin/tailwindcss"
+        )} -i ${arg.input} -o ${arg.output} -w -m`,
         {
           mode: "silent",
           cwd: arg.root,
@@ -34,9 +35,9 @@ export const frontend = {
       );
     } else {
       await run(
-        `bun run --silent ${dir.path("root:node_modules/.bin/tailwindcss")} -i ${
-          arg.input
-        } -o ${arg.output} -m`,
+        `bun run --silent ${dir.path(
+          "root:node_modules/.bin/tailwindcss"
+        )} -i ${arg.input} -o ${arg.output} -m`,
         {
           mode: "silent",
           cwd: arg.root,
@@ -53,8 +54,21 @@ export const frontend = {
         devServer: false,
         hmr: false,
         clean: !g.is_restarted,
+        mode: 'development',
         ...config,
         ...arg.config,
+      },
+      logs(log, { completed }) {
+        if (completed)
+          return `[ ${chalk.red(
+            padEnd(
+              arg.entryfile
+                .substring(dir.path("frontend:").length)
+                .split("/")
+                .filter((e) => e)[0],
+              6
+            )
+          )} ] ${log}`;
       },
       name: `fe~${trim(
         dirname(arg.entryfile).substring(process.cwd().length),

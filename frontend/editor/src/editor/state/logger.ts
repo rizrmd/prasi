@@ -5,7 +5,7 @@ export const writeLogger = proxy({
   status: "init" as "init" | "loading" | "ready" | "not-found",
   server: {
     startup: "",
-    status: "stopped" as "started" | "stopped", 
+    status: "stopped" as "started" | "stopped",
     logs: [] as { ts: number; raw: string }[],
   },
   frontend: {

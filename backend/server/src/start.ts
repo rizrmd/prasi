@@ -16,17 +16,17 @@ import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import type { WebSocketData } from "./ws/typings";
- 
-initServer(); 
- 
+
+initServer();
+
 if (argv.has("--dev")) {
   await initDev();
 } else {
   console.log(`Building ${chalk.blue("production")} bundle...`);
   await initProd();
-}  
-  
-const jsBase = staticFile({
+}
+
+const staticBase = staticFile({
   baseDir: dir.path(`data:frontend/base`),
   pathPrefix: "/js/base",
   indexHtml: (req: Request) => {
@@ -49,16 +49,22 @@ const jsBase = staticFile({
   },
 });
 
-const jsEditor = staticFile({
+const staticEditor = staticFile({
   baseDir: dir.path(`data:frontend/editor`),
   pathPrefix: "/js/editor",
+  compression: { enabled: true },
+});
+
+const staticPublic = staticFile({
+  baseDir: dir.path(`frontend:public`),
+  pathPrefix: "/",
   compression: { enabled: true },
 });
 
 g.server = Bun.serve({
   port: 4550,
   routes: {
-    "/log/:site_id": async (req: Request) => jsBase.serve(req),
+    "/log/:site_id": async (req: Request) => staticBase.serve(req),
     "/prod/:site_id": routeProd,
     "/prod/:site_id/*": routeProd,
     "/_dbs/*": routeDb,
@@ -73,12 +79,17 @@ g.server = Bun.serve({
   },
   websocket: routerWS,
   fetch(req, server) {
-    const editorResult = jsEditor.serve(req);
+    const editorResult = staticEditor.serve(req);
 
     if (editorResult.status !== 404) {
       return editorResult;
     }
-    return jsBase.serve(req);
+    const base = staticBase.serve(req);
+
+    if (base.status !== 404) {
+      return base;
+    }
+    return staticPublic.serve(req);
   },
 } as WebSocketServeOptions<WebSocketData>);
 

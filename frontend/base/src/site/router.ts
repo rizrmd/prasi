@@ -17,7 +17,15 @@ export type PageContent = {
   type: "root";
   childs: IItem[];
   component_ids: string[];
+  data: Record<string, PageData>;
 };
+export type PageData = {
+  name: string;
+  usage: Record<string, { as: "value" }>;
+  type: "promise" | "array" | "object" | "string";
+  initial_value: string;
+};
+
 export const createRouter = () => ({
   routes: [] as RouteEntry[],
   current: null as null | RouteMatch,
