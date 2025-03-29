@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 interface StaticHandler {
-  serve(req: Request): Response;
+  serve(req: Request): Promise<Response>;
 }
 export const compressableTypes = [
   "text/plain",
@@ -131,7 +131,7 @@ const serveHtml = (
 export const staticFile = (arg: {
   baseDir: string;
   pathPrefix?: string;
-  indexHtml?: (req: Request) => string;
+  indexHtml?: (req: Request) => Promise<string>;
   compression?: CompressionOptions;
 }): StaticHandler => {
   const basePath = arg.baseDir;
@@ -153,7 +153,7 @@ export const staticFile = (arg: {
   };
 
   return {
-    serve(req: Request): Response {
+    async serve(req: Request): Promise<Response> {
       try {
         const url = new URL(req.url);
         let pathname = decodeURIComponent(url.pathname);
@@ -176,7 +176,7 @@ export const staticFile = (arg: {
 
         // If file doesn't exist or is directory, try index handler for non-file URLs
         if (arg.indexHtml && !url.pathname.includes(".")) {
-          const htmlContent = arg.indexHtml(req);
+          const htmlContent = await arg.indexHtml(req);
           return serveHtml(htmlContent, req, compress);
         }
 

@@ -34,8 +34,8 @@ export default defineConfig({
     },
     distPath: { root: "../../../data/frontend/base" },
     filename: { js: `[name].bundle.js` },
+    assetPrefix: "/_dist/base",
   },
-
   server: {
     middlewareMode: true,
   },

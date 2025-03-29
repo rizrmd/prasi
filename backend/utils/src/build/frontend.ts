@@ -1,7 +1,7 @@
 import type { BuildParams } from "@umijs/mako";
 import { $ } from "bun";
 import chalk from "chalk";
-import { padEnd } from "lodash";
+import { pad, padEnd } from "lodash";
 import trim from "lodash/trim";
 import { dirname } from "path";
 import { g } from "server/utils/global";
@@ -75,10 +75,10 @@ export const frontend = {
               build.done = true;
               resolve();
             } else if (output.includes("error") || output.includes("ready")) {
-              console.log(`[${chalk.red(padEnd(name, 7))} ] ${output.trim()}`);
+              console.log(`[${chalk.red(pad(name, 7))} ] ${output.trim()}`);
             }
           } else {
-            console.log(`[${chalk.red(padEnd(name, 7))} ] ${output.trim()}`);
+            console.log(`[${chalk.red(pad(name, 7))} ] ${output.trim()}`);
           }
         },
       });

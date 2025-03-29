@@ -27,40 +27,35 @@ if (argv.has("--dev")) {
   await initProd();
 }
 
-const baseSrc = await parseScriptSrcFromHtml(
-  dir.path(`data:frontend/base/index.html`)
-);
-const editorSrc = await parseScriptSrcFromHtml(
-  dir.path(`data:frontend/editor/index.html`)
-);
+const generateJSTag = async () => {
+  const baseSrc = await parseScriptSrcFromHtml(
+    dir.path(`data:frontend/base/index.html`)
+  );
+  const editorSrc = await parseScriptSrcFromHtml(
+    dir.path(`data:frontend/editor/index.html`)
+  );
+  return `
+${baseSrc.map((src) => `    <script defer src="${src}"></script>`).join("\n")}
+${editorSrc
+  .map((src) => `    <script defer src="${src}"></script>`)
+  .join("\n")}`;
+};
+const jsTag = await generateJSTag();
 
 const staticBase = staticFile({
-  baseDir: dir.path(`data:frontend/base/static/js`),
-  pathPrefix: "/js/base",
-  indexHtml: (req: Request) => {
+  baseDir: dir.path(`data:frontend/base`),
+  pathPrefix: "/_dist/base",
+  indexHtml: async (req: Request) => {
     return `\
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="/_dist/css/base.css" />
+    <link rel="stylesheet" href="/_dist/css/editor.css" />
   </head>
   <body>
-${baseSrc
-  .map(
-    (src) =>
-      `    <script defer src="/js/base${src.substring(
-        "/static/js".length
-      )}"></script>`
-  )
-  .join("\n")}
-${editorSrc
-  .map(
-    (src) =>
-      `    <script defer src="/js/editor${src.substring(
-        "/static/js".length
-      )}"></script>`
-  )
-  .join("\n")}
+    ${g.is_restarted ? await generateJSTag() : jsTag}
   </body>
 </html>
 `;
@@ -71,8 +66,14 @@ ${editorSrc
 });
 
 const staticEditor = staticFile({
-  baseDir: dir.path(`data:frontend/editor/static/js`),
-  pathPrefix: "/js/editor",
+  baseDir: dir.path(`data:frontend/editor`),
+  pathPrefix: "/_dist/editor",
+  compression: { enabled: true },
+});
+
+const staticTailwind = staticFile({
+  baseDir: dir.path(`data:frontend/css`),
+  pathPrefix: "/_dist/css",
   compression: { enabled: true },
 });
 
@@ -99,18 +100,17 @@ g.server = Bun.serve({
     "/_prasi/:site_id/loading": acceptWS({ route: "site-loading" }),
   },
   websocket: routerWS,
-  fetch(req, server) {
-    const editorResult = staticEditor.serve(req);
+  async fetch(req, server) {
+    const editorResult = await staticEditor.serve(req);
+    if (editorResult.status !== 404) return editorResult;
 
-    if (editorResult.status !== 404) {
-      return editorResult;
-    }
-    const base = staticBase.serve(req);
+    const base = await staticBase.serve(req);
+    if (base.status !== 404) return base;
 
-    if (base.status !== 404) {
-      return base;
-    }
-    return staticPublic.serve(req);
+    const tailwind = await staticTailwind.serve(req);
+    if (tailwind.status !== 404) return tailwind;
+
+    return await staticPublic.serve(req);
   },
 } as WebSocketServeOptions<WebSocketData>);
 

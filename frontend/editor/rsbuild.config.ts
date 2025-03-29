@@ -40,6 +40,7 @@ export default defineConfig({
     },
     distPath: { root: "../../../data/frontend/editor" },
     filename: { js: `[name].bundle.js` },
+    assetPrefix: "/_dist/editor",
   },
 
   server: {

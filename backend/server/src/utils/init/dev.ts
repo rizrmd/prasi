@@ -28,7 +28,7 @@ export const initDev = async () => {
       frontend.tailwind({
         root: dir.path("frontend:base/src/"),
         input: dir.path("frontend:base/src/index.css"),
-        output: dir.path("data:frontend/base/main.css"),
+        output: dir.path("data:frontend/css/base.css"),
         mode: "dev",
       }),
       frontend.dev({
@@ -39,7 +39,7 @@ export const initDev = async () => {
       frontend.tailwind({
         root: dir.path("frontend:editor/src/"),
         input: dir.path("frontend:editor/src/index.css"),
-        output: dir.path("data:frontend/editor/main.css"),
+        output: dir.path("data:frontend/css/editor.css"),
         mode: "dev",
       }),
     ]);
