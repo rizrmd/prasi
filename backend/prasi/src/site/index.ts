@@ -11,8 +11,8 @@ import { watcher } from "utils/watcher";
 import { broadcastSiteLog } from "server/ws/ws-site-logger";
 import { inspect } from "node:util";
 import { formatMessagesSync } from "esbuild";
-
-export const Site = {
+ 
+export const Site = { 
   loaded: {} as Record<
     string,
     {

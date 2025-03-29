@@ -24,9 +24,6 @@ export const initDev = async () => {
         root: dir.path("frontend:base"),
         entryfile: dir.path("frontend:base/src/index.tsx"),
         outdir: dir.path("data:frontend/base"),
-        config: {
-          externals: undefined,
-        },
       }),
       frontend.tailwind({
         root: dir.path("frontend:base/src/"),

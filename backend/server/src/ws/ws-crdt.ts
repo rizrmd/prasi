@@ -1,7 +1,19 @@
-import * as awarenessProtocol from "y-protocols/awareness";
-import * as syncProtocol from "y-protocols/sync";
-import * as Y from "yjs";
-import { UndoManager } from "yjs";
+import type { Awareness } from "y-protocols/awareness.js";
+import type { UndoManager as YUndoManager } from "yjs";
+
+const g = global as any;
+if (!g.yjs) {
+  g.yjs = await import("yjs");
+  g.yawareness = await import("y-protocols/awareness");
+  g.ysync = await import("y-protocols/sync");
+}
+
+const awarenessProtocol = g.yawareness;
+const syncProtocol = g.ysync;
+const Y = g.yjs as any;
+const UndoManager = Y.UndoManager;
+
+type YDoc = InstanceType<typeof Y.Doc>;
 
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
@@ -17,7 +29,7 @@ const wsReadyStateOpen = 1;
 const wsReadyStateClosing = 2; // eslint-disable-line
 const wsReadyStateClosed = 3; // eslint-disable-line
 
-type CallbackFn = (update: Uint8Array, origin: any, doc: Y.Doc) => void;
+type CallbackFn = (update: Uint8Array, origin: any, doc: YDoc) => void;
 
 const updateTimeout = {} as Record<string, Timer>;
 
@@ -80,12 +92,7 @@ const updateHandler = (
   }
 };
 
-/**
- * @type {(ydoc: Y.Doc) => Promise<void>}
- */
-let contentInitializor: (ydoc: Y.Doc) => Promise<void> = async (
-  ydoc: Y.Doc
-) => {
+let contentInitializor: (ydoc: YDoc) => Promise<void> = async (ydoc: YDoc) => {
   if (ydoc instanceof WSSharedDoc && !ydoc.isInitialized) {
     const type = ydoc.name.split("/")[0];
     const crdt = crdtTypes[type as keyof typeof crdtTypes];
@@ -120,7 +127,7 @@ let contentInitializor: (ydoc: Y.Doc) => Promise<void> = async (
  * @param {(ydoc: Y.Doc) => Promise<void>} f
  */
 export const setContentInitializor = (
-  f: (ydoc: Y.Doc) => Promise<void>
+  f: (ydoc: YDoc) => Promise<void>
 ): void => {
   contentInitializor = f;
 };
@@ -128,8 +135,8 @@ export const setContentInitializor = (
 export class WSSharedDoc extends Y.Doc {
   name: string;
   conns: Map<ServerWebSocket<any>, Set<number>>;
-  awareness: awarenessProtocol.Awareness;
-  undoManager?: UndoManager;
+  awareness: Awareness;
+  undoManager?: YUndoManager;
   whenInitialized: Promise<void>;
   isInitialized: boolean = false;
   declare gc: boolean;

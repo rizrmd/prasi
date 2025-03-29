@@ -1,6 +1,12 @@
 {
   "name": "editor",
+  "scripts": {
+    "build": "rsbuild build",
+    "dev": "rsbuild dev --open",
+    "preview": "rsbuild preview"
+  },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0-rc.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -14,6 +20,7 @@
     "clsx": "^2.1.1",
     "fflate": "^0.8.2",
     "lucide-react": "^0.482.0",
+    "monaco-editor": "^0.52.2",
     "msgpackr": "^1.11.2",
     "react-resizable-panels": "^2.1.7",
     "tailwind-merge": "^3.0.2",

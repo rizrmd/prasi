@@ -14,7 +14,7 @@ const tabs = [
     icon: TableProperties,
   },
   {
-    value: "tree",
+    value: "struktur",
     icon: ListTree,
   },
   // {

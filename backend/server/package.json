@@ -3,6 +3,7 @@
   "dependencies": {
     "bun-sqlite-key-value": "^1.13.1",
     "chalk": "^5.4.1",
+    "cheerio": "^1.0.0",
     "lib0": "^0.2.99",
     "lodash.debounce": "^4.0.8",
     "uuid": "^11.1.0",

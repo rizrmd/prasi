@@ -1,11 +1,10 @@
-import type { BuildOutput } from "bun";
-import { bundleBun } from "./bundler-bun";
-import type { BuilderArg } from "./bundler-mako-process";
-import { rimraf } from "rimraf";
 import { dirname } from "path";
+import { rimraf } from "rimraf";
+import { bundleBun } from "./bundler-bun";
+import type { BundleArg } from "./typings";
 export const backend = {
   dev: async (
-    arg: BuilderArg & {
+    arg: BundleArg & {
       onBuild?:
         | ((type: "start" | "end", logs?: string[]) => void)
         | undefined;

@@ -1,12 +1,12 @@
 import { context, type Loader } from "esbuild";
-import type { BuilderArg } from "./bundler-mako-process";
 import { join } from "path";
 import * as React from "react";
-import * as ReactJSX from "react/jsx-runtime";
-import * as ReactJSXDev from "react/jsx-dev-runtime";
 import * as ReactDOM from "react-dom";
+import * as ReactJSXDev from "react/jsx-dev-runtime";
+import * as ReactJSX from "react/jsx-runtime";
+import type { BundleArg } from "./typings";
 export const bundleEsbuild = async (
-  arg: Omit<BuilderArg, "config"> & {
+  arg: BundleArg & {
     logs?: (log: string) => string | void;
     external?: string[];
     define?: Record<string, string>;

@@ -1,13 +1,13 @@
-import type { BuilderArg } from "./bundler-mako-process";
-import { bundleMako } from "./bundler-mako";
-import { dirname } from "path";
-import trim from "lodash/trim";
 import type { BuildParams } from "@umijs/mako";
-import { run } from "utils/run";
-import { dir } from "utils/dir";
-import { g } from "server/utils/global";
-import { padEnd } from "lodash";
+import { $ } from "bun";
 import chalk from "chalk";
+import { padEnd } from "lodash";
+import trim from "lodash/trim";
+import { dirname } from "path";
+import { g } from "server/utils/global";
+import { dir } from "utils/dir";
+import { run } from "utils/run";
+import type { BundleArg } from "./typings";
 const config: BuildParams["config"] = {
   platform: "browser",
   externals: {
@@ -46,52 +46,45 @@ export const frontend = {
       );
     }
   },
-  dev: async (arg: BuilderArg & { logs?: (log: string) => string | void }) => {
-    await bundleMako({
-      ...arg,
-      watch: true,
-      config: {
-        devServer: false,
-        hmr: false,
-        clean: !g.is_restarted,
-        mode: 'development',
-        ...config,
-        ...arg.config,
-      },
-      logs(log, { completed }) {
-        if (completed)
-          return `[ ${chalk.red(
-            padEnd(
-              arg.entryfile
-                .substring(dir.path("frontend:").length)
-                .split("/")
-                .filter((e) => e)[0],
-              6
-            )
-          )} ] ${log}`;
-      },
-      name: `fe~${trim(
-        dirname(arg.entryfile).substring(process.cwd().length),
-        "/\\"
-      )}`,
+  dev: async (
+    arg: BundleArg & {
+      logs?: (log: string) => string | void;
+    }
+  ) => {
+    // const res = await bundleBun({
+    //   entrypoints: [arg.entryfile],
+    //   outdir: arg.outdir,
+    //   splitting: true,
+    //   // watch: arg.root,
+    //   sourcemap: "external",
+    //   onBuildEnd(output) {
+    //     process.stdout.write(output?.join('\n'));
+    //   },
+    // });
+    const build = {
+      done: false,
+    };
+    const name = arg.root.split("/").pop();
+    await new Promise<void>((resolve) => {
+      run(`bun run --silent build --watch`, { 
+        mode: "pipe",
+        cwd: arg.root,
+        pipe(output) {
+          if (!build.done) {
+            if (output.includes("Total:")) {
+              build.done = true;
+              resolve();
+            } else if (output.includes("error") || output.includes("ready")) {
+              console.log(`[${chalk.red(padEnd(name, 7))} ] ${output.trim()}`);
+            }
+          } else {
+            console.log(`[${chalk.red(padEnd(name, 7))} ] ${output.trim()}`);
+          }
+        },
+      });
     });
   },
-  build: async (
-    arg: BuilderArg & { logs?: (log: string) => string | void }
-  ) => {
-    await bundleMako({
-      ...arg,
-      watch: false,
-      config: {
-        devServer: false,
-        hmr: false,
-        ...config,
-        ...arg.config,
-      },
-      name: `fe~${trim(
-        dirname(arg.entryfile).substring(process.cwd().length),
-        "/\\"
-      )}`,
-    });
+  build: async (arg: BundleArg & { logs?: (log: string) => string | void }) => {
+    await run(`bun run --silent build`, { mode: "passthrough", cwd: arg.root });
   },
 };

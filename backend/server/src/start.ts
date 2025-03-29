@@ -16,6 +16,7 @@ import { initServer } from "./utils/init";
 import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import type { WebSocketData } from "./ws/typings";
+import { parseScriptSrcFromHtml } from "utils/server/parse-html";
 
 initServer();
 
@@ -26,8 +27,15 @@ if (argv.has("--dev")) {
   await initProd();
 }
 
+const baseSrc = await parseScriptSrcFromHtml(
+  dir.path(`data:frontend/base/index.html`)
+);
+const editorSrc = await parseScriptSrcFromHtml(
+  dir.path(`data:frontend/editor/index.html`)
+);
+
 const staticBase = staticFile({
-  baseDir: dir.path(`data:frontend/base`),
+  baseDir: dir.path(`data:frontend/base/static/js`),
   pathPrefix: "/js/base",
   indexHtml: (req: Request) => {
     return `\
@@ -35,11 +43,24 @@ const staticBase = staticFile({
 <html>
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="/js/editor/main.css" />
   </head>
   <body>
-    <script type="module" src="/js/base/index.js"></script>
-    <script type="module" src="/js/editor/index.js"></script>
+${baseSrc
+  .map(
+    (src) =>
+      `    <script defer src="/js/base${src.substring(
+        "/static/js".length
+      )}"></script>`
+  )
+  .join("\n")}
+${editorSrc
+  .map(
+    (src) =>
+      `    <script defer src="/js/editor${src.substring(
+        "/static/js".length
+      )}"></script>`
+  )
+  .join("\n")}
   </body>
 </html>
 `;
@@ -50,7 +71,7 @@ const staticBase = staticFile({
 });
 
 const staticEditor = staticFile({
-  baseDir: dir.path(`data:frontend/editor`),
+  baseDir: dir.path(`data:frontend/editor/static/js`),
   pathPrefix: "/js/editor",
   compression: { enabled: true },
 });

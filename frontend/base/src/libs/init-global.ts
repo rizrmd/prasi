@@ -18,7 +18,7 @@ export const initGlobal = (siteReady: typeof window.siteReady) => {
   window.siteReady = siteReady;
   window.cx = cx;
   window.cn = cx;
-  window.db = dbInstance();
+  window.db = dbInstance() as any;
   window.navigate = import_navigate.navigate;
   window.baseurl = import_navigate.baseurl;
   window.siteurl = import_navigate.siteurl;
