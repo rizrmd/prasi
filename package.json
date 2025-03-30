@@ -23,5 +23,8 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.0.14"
+  },
+  "patchedDependencies": {
+    "immer-yjs@1.1.1": "patches/immer-yjs@1.1.1.patch"
   }
 }

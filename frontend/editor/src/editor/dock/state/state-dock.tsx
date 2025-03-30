@@ -7,8 +7,19 @@ import {
 } from "@/components/ui/popover";
 import { editorState } from "@/editor/state/layout";
 import { useLocal } from "base/libs/use-local";
-import type { PageContent, PageData } from "base/site/router";
-import { Plus, Type } from "lucide-react";
+import type { PageContent, PageState } from "base/site/router";
+import {
+  Binary,
+  FunctionSquare,
+  HardDriveDownload,
+  HardDriveUpload,
+  LaptopMinimal,
+  Plus,
+  RectangleEllipsis,
+  RectangleHorizontal,
+  Type,
+  Variable,
+} from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useSnapshot } from "valtio";
 import { StateEditItem } from "./state-edit-item";
@@ -29,13 +40,14 @@ export const StateAction = () => {
       <Button
         size="xs"
         onClick={() => {
-          current.focused = "_new_data";
+          const new_name = "_new_";
+          current.focused = new_name;
           current.mode = "inline-edit";
-          editorState.crdt.write.data = {
-            ...editorState.crdt.write.data,
-            ["_new_data"]: {
-              name: "_new_data",
-              type: "string",
+          editorState.crdt.write.state = {
+            ...editorState.crdt.write.state,
+            [new_name]: {
+              name: new_name,
+              type: "static",
               usage: {},
               initial_value: '""',
             },
@@ -48,6 +60,13 @@ export const StateAction = () => {
   );
 };
 
+const sortType = {
+  static: 0,
+  promise: 1,
+  computed: 2,
+  function: 3,
+};
+
 export const StateDock = () => {
   const read = useSnapshot(editorState.crdt.write) as PageContent;
   const render = useState({})[1];
@@ -55,12 +74,16 @@ export const StateDock = () => {
   return (
     <div className="relative overflow-auto flex-1">
       <div className="absolute inset-0 text-sm">
-        {Object.entries(read.data || {})
-          .sort((a, b) => a[0].localeCompare(b[0]))
+        {Object.entries(read.state || {})
+          .sort((a, b) =>
+            `${sortType[a[1].type]}-${a[0]}`.localeCompare(
+              `${sortType[b[1].type]}-${b[0]}`
+            )
+          )
           .map(([key, item], idx) => {
             return (
               <DataItem
-                item={item}
+                read={item}
                 key={key}
                 onDelete={async () => {
                   const confirmed = await Alert.confirm(
@@ -68,16 +91,16 @@ export const StateDock = () => {
                   );
 
                   if (confirmed.confirm) {
-                    const data = { ...read.data } as PageContent["data"];
+                    const data = { ...read.state } as PageContent["state"];
 
                     delete data[key];
                     current.mode = "view";
-                    editorState.crdt.write.data = data;
+                    editorState.crdt.write.state = data;
                   }
                 }}
                 onChange={async (value) => {
-                  const data = { ...read.data } as PageContent["data"];
-                  const existing = { ...data[key] } as PageData;
+                  const data = { ...read.state } as PageContent["state"];
+                  const existing = { ...data[key] } as PageState;
 
                   if (value === "" && existing.name !== "") {
                     current.original_name = existing.name;
@@ -104,7 +127,7 @@ export const StateDock = () => {
                       data[value] = existing;
                     }
                   }
-                  editorState.crdt.write.data = data;
+                  editorState.crdt.write.state = data;
                 }}
               />
             );
@@ -115,12 +138,12 @@ export const StateDock = () => {
 };
 
 const DataItem: FC<{
-  item: PageData;
+  read: PageState;
   onChange: (value: string) => void;
   onDelete: () => void;
-}> = ({ item, onChange, onDelete }) => {
+}> = ({ read, onChange, onDelete }) => {
   const local = useLocal({
-    value: item.name,
+    value: read.name,
     timeout: null as any,
     cursor_pos: 0,
     animation: false,
@@ -129,11 +152,11 @@ const DataItem: FC<{
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (item.name !== local.value) {
-      local.value = item.name;
+    if (read.name !== local.value) {
+      local.value = read.name;
       local.render();
     }
-  }, [item.name]);
+  }, [read.name]);
 
   return (
     <Popover
@@ -245,7 +268,7 @@ const DataItem: FC<{
                   e.currentTarget.select();
                 }}
                 onBlur={() => {
-                  if (local.value !== item.name) {
+                  if (local.value !== read.name) {
                     onChange(local.value);
                   }
                   current.mode = "view";
@@ -271,7 +294,7 @@ const DataItem: FC<{
                 `
               )}
             >
-              {item.type === "string" && <Type />}
+              <PageStateIcon type={read.type} />
             </div>
           </div>
         </PopoverTrigger>
@@ -282,8 +305,22 @@ const DataItem: FC<{
         className="z-10 text-sm p-0 rounded-none"
         side="right"
       >
-        <StateEditItem name={local.value} />
+        <StateEditItem
+          read={read}
+          write={editorState.crdt.write.state[read.name]!}
+        />
       </PopoverContent>
     </Popover>
+  );
+};
+
+export const PageStateIcon = ({ type }: { type: PageState["type"] }) => {
+  return (
+    <>
+      {type === "static" && <RectangleEllipsis />}
+      {type === "promise" && <HardDriveDownload />}
+      {type === "computed" && <Variable />}
+      {type === "function" && <FunctionSquare />}
+    </>
   );
 };

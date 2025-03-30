@@ -13,6 +13,7 @@ const syncProtocol = g.ysync;
 const Y = g.yjs as any;
 const UndoManager = Y.UndoManager;
 
+const decoder = new TextDecoder();
 type YDoc = InstanceType<typeof Y.Doc>;
 
 import * as decoding from "lib0/decoding";
@@ -41,7 +42,6 @@ const wsToDocMap = new Map<ServerWebSocket<any>, string>();
 
 const messageSync = 0;
 const messageAwareness = 1;
-const messageUndoRedoReceived = 3;
 const messageUndoRedoSend = 3;
 
 /**
@@ -58,6 +58,7 @@ const sendUndoRedoStatus = (
   const canRedo = doc.undoManager.canRedo();
   encoding.writeVarUint(encoder, canUndo ? 1 : 0);
   encoding.writeVarUint(encoder, canRedo ? 1 : 0);
+
   send(doc, ws, encoding.toUint8Array(encoder));
 };
 
@@ -88,7 +89,7 @@ const updateHandler = (
     clearTimeout(updateTimeout[doc.name]);
     updateTimeout[doc.name] = setTimeout(() => {
       crdt.update(doc.name, doc.getMap("entry").toJSON());
-    }, 2000);
+    }, 1000);
   }
 };
 
@@ -246,6 +247,7 @@ const messageListener = (
     const encoder = encoding.createEncoder();
     const decoder = decoding.createDecoder(message);
     const messageType = decoding.readVarUint(decoder);
+
     switch (messageType) {
       case messageSync:
         encoding.writeVarUint(encoder, messageSync);
@@ -266,16 +268,6 @@ const messageListener = (
           decoding.readVarUint8Array(decoder),
           ws
         );
-        break;
-      }
-      case messageUndoRedoReceived: {
-        const info = JSON.parse(decoding.readVarString(decoder));
-        if (info.action === "undo") {
-          doc.undoManager?.undo();
-        } else if (info.action === "redo") {
-          doc.undoManager?.redo();
-        }
-        doc.conns.forEach((_, conn) => sendUndoRedoStatus(doc, conn));
         break;
       }
     }
@@ -404,6 +396,34 @@ export const wsCrdt = {
   },
 
   message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
+    let str = message;
+    if ((message as any).byteLength === 12 && message instanceof ArrayBuffer) {
+      str = decoder.decode(message);
+    }
+
+    if (typeof str === "string") {
+      if (str === "undo" || str === "redo") {
+        const docName = wsToDocMap.get(ws);
+        if (docName) {
+          const doc = docs.get(docName);
+          if (doc) {
+            // Handle undo/redo commands
+            if (str === "undo") {
+              doc.undoManager?.undo();
+            } else if (str === "redo") {
+              doc.undoManager?.redo();
+            }
+            doc.conns.forEach((_, conn) => sendUndoRedoStatus(doc, conn));
+            return;
+          }
+        }
+      }
+      if (str === "pong") {
+        pongReceivedFlags.set(ws, true);
+        return;
+      }
+    }
+
     // Handle binary messages for Yjs protocol
     if (message instanceof ArrayBuffer) {
       const docName = wsToDocMap.get(ws);
@@ -413,25 +433,6 @@ export const wsCrdt = {
           messageListener(ws, doc, new Uint8Array(message));
         }
       }
-    }
-    if (message === "undo" || message === "redo") {
-      const docName = wsToDocMap.get(ws);
-      if (docName) {
-        const doc = docs.get(docName);
-        if (doc) {
-          if (message === "undo") {
-            doc.undoManager?.undo();
-          } else if (message === "redo") {
-            doc.undoManager?.redo();
-          }
-          doc.conns.forEach((_, conn) => sendUndoRedoStatus(doc, conn));
-        }
-      }
-    }
-
-    // Handle potential pong messages
-    if (message === "pong") {
-      pongReceivedFlags.set(ws, true);
     }
   },
 

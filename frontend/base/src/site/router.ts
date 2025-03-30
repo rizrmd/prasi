@@ -17,12 +17,12 @@ export type PageContent = {
   type: "root";
   childs: IItem[];
   component_ids: string[];
-  data: Record<string, PageData>;
+  state: Record<string, PageState>;
 };
-export type PageData = {
+export type PageState = {
   name: string;
   usage: Record<string, { as: "value" }>;
-  type: "promise" | "array" | "object" | "string";
+  type: "static" | "promise" | "function" | "computed";
   initial_value: string;
 };
 

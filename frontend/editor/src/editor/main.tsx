@@ -2,10 +2,10 @@ import Dock from "@/components/ui/dock";
 import { Spinner } from "@/components/ui/spinner";
 import { editorState, writeLayout } from "@/editor/state/layout";
 import { type FC } from "react";
+import Hotkeys from "react-hot-keys";
 import { useSnapshot } from "valtio";
 import { LeftDock } from "./dock/left";
 import { EditorPreview } from "./preview";
-import Hotkeys from "react-hot-keys";
 
 export const EditorMain: FC = () => {
   const readLayout = useSnapshot(writeLayout);
@@ -18,6 +18,7 @@ export const EditorMain: FC = () => {
       <Hotkeys
         keyName="ctrl+z, cmd+z"
         onKeyDown={() => {
+          console.log('undo')
           editorState.crdt.undo();
         }}
         allowRepeat
@@ -25,6 +26,7 @@ export const EditorMain: FC = () => {
       <Hotkeys
         keyName="ctrl+shift+z, cmd+shift+z, ctrl+y"
         onKeyDown={() => {
+          console.log('redo')
           editorState.crdt.redo();
         }}
         allowRepeat

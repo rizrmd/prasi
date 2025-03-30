@@ -1,20 +1,12 @@
-import { forwardRef } from "react";
-import type { ReactNode, ForwardedRef } from "react";
 import {
   ContextMenu,
-  ContextMenuCheckboxItem,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuRadioGroup,
-  ContextMenuRadioItem,
-  ContextMenuSeparator,
   ContextMenuShortcut,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger,
+  ContextMenuTrigger
 } from "@/components/ui/context-menu";
+import type { ForwardedRef, ReactNode } from "react";
+import { forwardRef } from "react";
 
 export const RightClick = forwardRef<
   HTMLDivElement,

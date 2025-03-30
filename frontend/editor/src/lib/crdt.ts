@@ -1,5 +1,5 @@
-import { proxy, subscribe } from "valtio";
-import { bind } from "valtio-yjs";
+import { bind } from "immer-yjs";
+import { proxy, snapshot, subscribe } from "valtio";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
@@ -46,10 +46,35 @@ export const connectCRDT = <T extends Record<string, unknown>>({
   const sync = new WebsocketProvider(url.toString(), `${type}/${id}`, ydoc);
   const ymap = ydoc.getMap("entry");
 
+  const binder = bind(ymap);
   const undoCan = proxy({ undo: true, redo: true });
   const write = proxy(ymap.toJSON()) as T;
-  bind(write, ymap);
+
+  let state = {
+    updatingFromServer: false,
+  };
+  ydoc.on("update", (update, source) => {
+    if (source?.serverUrl) {
+      state.updatingFromServer = true;
+      const map = JSON.parse(JSON.stringify(ymap.toJSON()));
+      for (const [key, value] of Object.entries(map)) {
+        (write as any)[key] = value;
+      }
+      setTimeout(() => {
+        state.updatingFromServer = false;
+      });
+    }
+  });
+
   subscribe(write, () => {
+    if (!state.updatingFromServer) {
+      const tobe = snapshot(write) as any;
+      binder.update((draft) => {
+        for (const [key, value] of Object.entries(tobe)) {
+          (draft as any)[key] = value;
+        }
+      });
+    }
     render();
   });
 

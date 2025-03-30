@@ -1,0 +1,23 @@
+diff --git a/node_modules/immer-yjs/.bun-tag-92565d8450621d51 b/.bun-tag-92565d8450621d51
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/dist/immer-yjs.es.js b/dist/immer-yjs.es.js
+index 9199dca7f23e7e31f63f4fd264ff93617db3ed6f..0332e5e9b1a1b701160ba0d3e6072361cb0ab080 100644
+--- a/dist/immer-yjs.es.js
++++ b/dist/immer-yjs.es.js
+@@ -1,4 +1,4 @@
+-import produce, { enablePatches, produceWithPatches } from 'immer';
++import { produce, enablePatches, produceWithPatches } from 'immer';
+ import * as Y from 'yjs';
+ 
+ function isJSONPrimitive(v) {
+diff --git a/src/immer-yjs.ts b/src/immer-yjs.ts
+index 4bf7008a3788c0459a7b696288f47377d55f182c..d977ff2ab941dc44b504b7538394e6b012a780ee 100644
+--- a/src/immer-yjs.ts
++++ b/src/immer-yjs.ts
+@@ -1,4 +1,4 @@
+-import produce, { enablePatches, Patch, produceWithPatches } from 'immer'
++import { produce, enablePatches, Patch, produceWithPatches } from 'immer'
+ import * as Y from 'yjs'
+ 
+ import { JSONArray, JSONObject, JSONValue } from './types'
