@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "base/*": [
+        "../base/src/*"
+      ],
+      "utils/*": [
+        "../../backend/utils/src/*"
+      ],
+      "frontend/*": [
+        "../../frontend/*"
+      ],
+      "backend/*": [
+        "../../backend/*"
+      ]
+    },
+    "types": [
+      "../base/src/libs/global.d.ts"
+    ]
+  }
+}

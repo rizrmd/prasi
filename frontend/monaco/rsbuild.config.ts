@@ -20,9 +20,6 @@ export default defineConfig({
   },
 
   tools: {
-    postcss: (opts, { addPlugins }) => {
-      addPlugins(require("@tailwindcss/postcss"));
-    },
     rspack: {
       ignoreWarnings: [
         /require function is used in a way/,
@@ -41,9 +38,9 @@ export default defineConfig({
     sourceMap: {
       js: "source-map",
     },
-    distPath: { root: "../../../data/frontend/editor" },
+    distPath: { root: "../../../data/frontend/monaco" },
     filename: { js: `[name].bundle.js` },
-    assetPrefix: "/_dist/editor",
+    assetPrefix: "/_dist/monaco",
   },
 
   server: {

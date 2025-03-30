@@ -25,23 +25,23 @@ export const initDev = async () => {
         entryfile: dir.path("frontend:base/src/index.tsx"),
         outdir: dir.path("data:frontend/base"),
       }),
-      frontend.tailwind({
-        root: dir.path("frontend:base/src/"),
-        input: dir.path("frontend:base/src/index.css"),
-        output: dir.path("data:frontend/css/base.css"),
-        mode: "dev",
-      }),
+      // frontend.tailwind({
+      //   root: dir.path("frontend:base/src/"),
+      //   input: dir.path("frontend:base/src/index.css"),
+      //   output: dir.path("data:frontend/css/base.css"),
+      //   mode: "dev",
+      // }),
       frontend.dev({
         root: dir.path("frontend:editor"),
         entryfile: dir.path("frontend:editor/src/index.tsx"),
         outdir: dir.path("data:frontend/editor"),
       }),
-      frontend.tailwind({
-        root: dir.path("frontend:editor/src/"),
-        input: dir.path("frontend:editor/src/index.css"),
-        output: dir.path("data:frontend/css/editor.css"),
-        mode: "dev",
-      }),
+      // frontend.tailwind({
+      //   root: dir.path("frontend:editor/src/"),
+      //   input: dir.path("frontend:editor/src/index.css"),
+      //   output: dir.path("data:frontend/css/editor.css"),
+      //   mode: "dev",
+      // }),
     ]);
 
     if (!g.is_restarted) {

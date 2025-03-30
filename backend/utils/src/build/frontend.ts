@@ -1,20 +1,8 @@
-import type { BuildParams } from "@umijs/mako";
-import { $ } from "bun";
 import chalk from "chalk";
-import { pad, padEnd } from "lodash";
-import trim from "lodash/trim";
-import { dirname } from "path";
-import { g } from "server/utils/global";
+import { pad } from "lodash";
 import { dir } from "utils/dir";
 import { run } from "utils/run";
 import type { BundleArg } from "./typings";
-const config: BuildParams["config"] = {
-  platform: "browser",
-  externals: {
-    "react-dom": "ReactDOM",
-    react: "React",
-  },
-};
 export const frontend = {
   tailwind: async (arg: {
     root: string;
@@ -66,7 +54,7 @@ export const frontend = {
     };
     const name = arg.root.split("/").pop();
     await new Promise<void>((resolve) => {
-      run(`bun run --silent build --watch`, { 
+      run(`bun run --silent build --watch`, {
         mode: "pipe",
         cwd: arg.root,
         pipe(output) {
@@ -75,10 +63,12 @@ export const frontend = {
               build.done = true;
               resolve();
             } else if (output.includes("error") || output.includes("ready")) {
-              console.log(`[${chalk.red(pad(name, 7))} ] ${output.trim()}`);
+              console.log(
+                `[${chalk.red(pad(name, 8, " "))}] ${output.trim()}`
+              );
             }
           } else {
-            console.log(`[${chalk.red(pad(name, 7))} ] ${output.trim()}`);
+            console.log(`[${chalk.red(pad(name, 8, " "))}] ${output.trim()}`);
           }
         },
       });

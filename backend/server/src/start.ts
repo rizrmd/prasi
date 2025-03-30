@@ -17,6 +17,7 @@ import { initDev } from "./utils/init/dev";
 import { initProd } from "./utils/init/prod";
 import type { WebSocketData } from "./ws/typings";
 import { parseScriptSrcFromHtml } from "utils/server/parse-html";
+import { run } from "utils/run";
 
 initServer();
 
@@ -26,36 +27,51 @@ if (argv.has("--dev")) {
   console.log(`Building ${chalk.blue("production")} bundle...`);
   await initProd();
 }
+if (!g.is_restarted) {
+  if (!dir.exists("data:frontend/monaco")) {
+    await run(`bun run --silent build`, {
+      mode: "silent",
+      cwd: dir.path("frontend:monaco"),
+    });
+  }
+}
 
-const generateJSTag = async () => {
-  const baseSrc = await parseScriptSrcFromHtml(
+const generateHtmlTag = async () => {
+  const base = await parseScriptSrcFromHtml(
     dir.path(`data:frontend/base/index.html`)
   );
-  const editorSrc = await parseScriptSrcFromHtml(
+  const editor = await parseScriptSrcFromHtml(
     dir.path(`data:frontend/editor/index.html`)
   );
-  return `
-${baseSrc.map((src) => `    <script defer src="${src}"></script>`).join("\n")}
-${editorSrc
-  .map((src) => `    <script defer src="${src}"></script>`)
-  .join("\n")}`;
+  const monaco = await parseScriptSrcFromHtml(
+    dir.path(`data:frontend/monaco/index.html`)
+  );
+  return {
+    js: [...base.js, ...editor.js, ...monaco.js]
+      .map((src) => `    <script defer src="${src}"></script>`)
+      .join("\n"),
+    css: [...base.css, ...editor.css, ...monaco.css]
+      .map((src) => `    <link href="${src}" rel="stylesheet" />`)
+      .join("\n"),
+  };
 };
-const jsTag = await generateJSTag();
+
+const htmlTag = await generateHtmlTag();
 
 const staticBase = staticFile({
   baseDir: dir.path(`data:frontend/base`),
   pathPrefix: "/_dist/base",
   indexHtml: async (req: Request) => {
+    const tags = g.is_restarted ? await generateHtmlTag() : htmlTag;
     return `\
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="/_dist/css/base.css" />
-    <link rel="stylesheet" href="/_dist/css/editor.css" />
+${tags.css}
   </head>
   <body>
-    ${g.is_restarted ? await generateJSTag() : jsTag}
+${tags.js}
   </body>
 </html>
 `;
@@ -71,9 +87,9 @@ const staticEditor = staticFile({
   compression: { enabled: true },
 });
 
-const staticTailwind = staticFile({
-  baseDir: dir.path(`data:frontend/css`),
-  pathPrefix: "/_dist/css",
+const staticMonaco = staticFile({
+  baseDir: dir.path(`data:frontend/monaco`),
+  pathPrefix: "/_dist/monaco",
   compression: { enabled: true },
 });
 
@@ -104,11 +120,11 @@ g.server = Bun.serve({
     const editorResult = await staticEditor.serve(req);
     if (editorResult.status !== 404) return editorResult;
 
+    const monacoResult = await staticMonaco.serve(req);
+    if (monacoResult.status !== 404) return monacoResult;
+
     const base = await staticBase.serve(req);
     if (base.status !== 404) return base;
-
-    const tailwind = await staticTailwind.serve(req);
-    if (tailwind.status !== 404) return tailwind;
 
     return await staticPublic.serve(req);
   },

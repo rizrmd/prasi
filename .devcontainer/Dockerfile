@@ -1,4 +1,4 @@
-FROM debian:12-slim
+FROM arm64v8/debian:12-slim
 
 RUN apt-get update  \
     && apt-get -y --no-install-recommends install  \

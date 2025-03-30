@@ -5,6 +5,7 @@ import { type FC } from "react";
 import { useSnapshot } from "valtio";
 import { LeftDock } from "./dock/left";
 import { EditorPreview } from "./preview";
+import Hotkeys from "react-hot-keys";
 
 export const EditorMain: FC = () => {
   const readLayout = useSnapshot(writeLayout);
@@ -14,6 +15,20 @@ export const EditorMain: FC = () => {
 
   return (
     <>
+      <Hotkeys
+        keyName="ctrl+z, cmd+z"
+        onKeyDown={() => {
+          editorState.crdt.undo();
+        }}
+        allowRepeat
+      ></Hotkeys>
+      <Hotkeys
+        keyName="ctrl+shift+z, cmd+shift+z, ctrl+y"
+        onKeyDown={() => {
+          editorState.crdt.redo();
+        }}
+        allowRepeat
+      ></Hotkeys>
       <Dock
         position="left"
         isVisible={true}

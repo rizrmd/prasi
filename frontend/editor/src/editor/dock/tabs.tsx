@@ -1,20 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import {
-  ListTree,
-  TableProperties,
-  type LucideProps
-} from "lucide-react";
+import { ListTree, TableProperties, type LucideProps } from "lucide-react";
 import type React from "react";
 import type { FC, ReactNode, RefAttributes } from "react";
 
 const tabs = [
   {
-    value: "data",
+    value: "state",
+    title: "Data & Action",
     icon: TableProperties,
   },
   {
-    value: "struktur",
+    value: "structure",
+    title: "Structure",
     icon: ListTree,
   },
   // {
@@ -25,7 +23,8 @@ const tabs = [
 
 const VerticalBorderedTabs: FC<{
   children: (arg: {
-    tab: string;
+    tab: (typeof tabs)[number]["value"];
+    title?: string;
     Icon: React.FC<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   }) => ReactNode;
 }> = ({ children }) => {
@@ -57,7 +56,7 @@ const VerticalBorderedTabs: FC<{
       <div className="grow flex-1 w-full  h-full flex border-l-border border-l bg-white">
         {tabs.map((item) => (
           <TabsContent key={item.value} value={item.value}>
-            {children({ tab: item.value, Icon: item.icon })}
+            {children({ tab: item.value, Icon: item.icon, title: item.title })}
           </TabsContent>
         ))}
       </div>

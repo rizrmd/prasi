@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { initGlobal } from "./libs/init-global";
+import "./index.css";
 
 initGlobal((rootElement) => {
   let div = document.getElementById("app");
@@ -7,7 +8,7 @@ initGlobal((rootElement) => {
     div = document.createElement("div");
     div.id = "app";
     document.body.prepend(div);
-  } 
+  }
 
   if (div) {
     const root = createRoot(div);

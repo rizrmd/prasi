@@ -18,6 +18,7 @@ interface AlertState {
   onConfirm: () => void;
   onCancel: () => void;
   mode: "confirm" | "info";
+  title?: string;
   checkbox?: {
     label: string;
     checked: boolean;
@@ -35,10 +36,11 @@ const alertState = proxy<AlertState>({
 export const Alert = {
   confirm: (
     message: string,
-    option?: { checkbox: string }
+    option?: { checkbox: string; title?: string }
   ): Promise<{ confirm: boolean; checkbox?: boolean }> => {
     return new Promise((resolve) => {
       alertState.mode = "confirm";
+      alertState.title = option?.title;
       alertState.isOpen = true;
       alertState.message = message;
 
@@ -107,7 +109,11 @@ export function GlobalAlert() {
       <AlertDialogContent className="select-none">
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {snap.mode === "confirm" ? "Konfirmasi" : "Informasi"}
+            {snap.title ? (
+              snap.title
+            ) : (
+              <>{snap.mode === "confirm" ? "Confirmation" : "Information"}</>
+            )}
           </AlertDialogTitle>
           <AlertDialogDescription className="whitespace-pre-wrap">
             {snap.message}
@@ -134,17 +140,28 @@ export function GlobalAlert() {
                 className="cursor-pointer"
                 onClick={snap.onCancel}
               >
-                Tidak
+                No
               </AlertDialogCancel>
               <AlertDialogAction
                 className="cursor-pointer"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    snap.onConfirm();
+                  }
+                  if (e.key === "Escape") {
+                    snap.onCancel();
+                  }
+                }}
                 onClick={snap.onConfirm}
               >
-                Ya
+                Yes
               </AlertDialogAction>
             </>
           ) : (
-            <AlertDialogAction onClick={snap.onConfirm} autoFocus>OK</AlertDialogAction>
+            <AlertDialogAction onClick={snap.onConfirm} autoFocus>
+              OK
+            </AlertDialogAction>
           )}
         </AlertDialogFooter>
       </AlertDialogContent>
