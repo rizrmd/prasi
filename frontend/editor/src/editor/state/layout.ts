@@ -1,4 +1,5 @@
 import type { CRDT } from "@/lib/crdt";
+import type { NodeModel } from "@minoru/react-dnd-treeview";
 import type { EBaseComp, PNode } from "base/prasi/logic/types";
 import type { PageContent, Router } from "base/site/router";
 import { proxy } from "valtio";
@@ -15,8 +16,14 @@ export const editor = {
   page: null as unknown as CRDT<PageContent>,
   comp: {} as Record<string, CRDT<EBaseComp>>,
   tree: {
-    page: [] as PNode[],
-    comp: {} as Record<string, PNode[]>,
+    current: {
+      mode: "page" as "page" | "component",
+    },
+    page: { list: [] as NodeModel<PNode>[], map: {} as Record<string, PNode> },
+    comp: {} as Record<
+      string,
+      { list: NodeModel<PNode>[]; map: Record<string, PNode> }
+    >,
   },
   bread: {
     list: [] as { id: string; component_id?: string; name: string }[],

@@ -1,7 +1,9 @@
 import { Spinner } from "@/components/ui/spinner";
+import { flattenTree } from "@/editor/dock/structure/utils/flatten-tree";
 import { EditorMain } from "@/editor/main";
 import { editor } from "@/editor/state/layout";
 import { connectCRDT, type CRDT } from "@/lib/crdt";
+import type { EBaseComp } from "base/prasi/logic/types";
 import { createViWrite } from "base/prasi/vi/vi-state";
 import type { PageContent } from "base/site/router";
 import { useEffect, useRef, useState } from "react";
@@ -20,19 +22,34 @@ export default () => {
       render: () => {
         render({});
       },
-      onUpdate(data) {
+      async onUpdate(data) {
+        const comps = {} as Record<string, EBaseComp>;
+        const promises = [] as Promise<void>[];
         for (const id of data.component_ids) {
           if (!editor.comp[id]) {
-            editor.comp[id] = connectCRDT({
-              type: "comp",
-              id,
-              render: () => {
-                render({});
-              },
-              onUpdate(data) {},
+            const p = new Promise<void>((resolve) => {
+              editor.comp[id] = connectCRDT({
+                type: "comp",
+                id,
+                render: () => {
+                  render({});
+                },
+                onUpdate(data) {
+                  if (!comps[id]) {
+                    comps[id] = data;
+                    resolve();
+                  }
+                },
+              });
             });
+            promises.push(p);
           }
         }
+
+        await Promise.all(promises);
+        const tree = flattenTree(data.childs, comps);
+        editor.tree.page.list = tree.models;
+        editor.tree.page.map = tree.map;
       },
     });
 

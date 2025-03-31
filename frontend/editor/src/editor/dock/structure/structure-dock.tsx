@@ -1,37 +1,64 @@
 import { editor } from "@/editor/state/layout";
-import { useSnapshot } from "valtio";
 import {
-  Tree,
   getBackendOptions,
   MultiBackend,
-  type NodeModel,
+  Tree,
 } from "@minoru/react-dnd-treeview";
-import { DndProvider } from "react-dnd";
 import type { PNode } from "base/prasi/logic/types";
+import { DndProvider } from "react-dnd";
+import { useSnapshot } from "valtio";
+import { renderTreeItem } from "./parts/tree-item";
+import { Placeholder } from "./parts/tree-item-drag";
+import { useEffect, useRef, useState } from "react";
 
 export const StructureDock = () => {
   const read = useSnapshot(editor.page.write);
+  const render = useState({})[1];
+  const ref = useRef<HTMLDivElement>(null);
   const TypedTree = Tree<PNode>;
-  
+
+  useEffect(() => {
+    render({});
+  }, []);
+
+  let tree = editor.tree.page.list;
+
   return (
-    <div className="relative overflow-auto">
-      <div className="absolute inset-0">
-        <DndProvider backend={MultiBackend} options={getBackendOptions()}>
+    <div
+      ref={ref}
+      className={cn("relative overflow-auto flex-1 h-full w-full")}
+    >
+      {ref.current && (
+        <DndProvider
+          backend={MultiBackend}
+          options={getBackendOptions({ html5: { rootElement: ref.current } })}
+        >
           <TypedTree
-            tree={[]}
-            rootId={0}
+            tree={tree}
+            classes={{
+              root: "absolute inset-0 flex flex-col items-stretch",
+            }}
+            rootId={"root"}
             onDrop={() => {}}
-            render={(node, { depth, isOpen, onToggle }) => (
-              <div style={{ marginLeft: depth * 10 }}>
-                {node.droppable && (
-                  <span onClick={onToggle}>{isOpen ? "[-]" : "[+]"}</span>
-                )}
-                {node.text}
-              </div>
+            sort={false}
+            canDrag={(node) => {
+              if (node) {
+                if (node.data?.parent?.component?.is_jsx_root) {
+                  return false;
+                }
+              }
+
+              return true;
+            }}
+            insertDroppableFirst={false}
+            dropTargetOffset={10}
+            render={renderTreeItem}
+            placeholderRender={(node, params) => (
+              <Placeholder node={node} params={params} />
             )}
           />
         </DndProvider>
-      </div>
+      )}
     </div>
   );
 };
