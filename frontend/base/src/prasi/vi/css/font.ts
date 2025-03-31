@@ -1,5 +1,5 @@
-import type { FNFont, MetaItem } from "src/prasi/logic/types";
-import { responsiveVal } from "src/prasi/utils/responsive-val";
+import type { FNFont, MetaItem } from "base/prasi/logic/types";
+import { responsiveVal } from "base/prasi/utils/responsive-val";
 
 export const glbFont = window as unknown as {
   defaultFont: string;

@@ -3,7 +3,7 @@ import react from "react";
 import react_dom from "react-dom";
 import * as ReactJSXDev from "react/jsx-dev-runtime";
 import * as ReactJSX from "react/jsx-runtime";
-import { dbInstance } from "src/prasi/utils/db-instance";
+import { dbInstance } from "base/prasi/utils/db-instance";
 import { initSite } from "../site/init-site";
 import { cx } from "./cx";
 import * as import_navigate from "./navigate";

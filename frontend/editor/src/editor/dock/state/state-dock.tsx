@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { editorState } from "@/editor/state/layout";
+import { editor } from "@/editor/state/layout";
 import { useLocal } from "base/libs/use-local";
 import type { PageContent, PageState } from "base/site/router";
 import {
@@ -43,8 +43,8 @@ export const StateAction = () => {
           const new_name = "_new_";
           current.focused = new_name;
           current.mode = "inline-edit";
-          editorState.crdt.write.state = {
-            ...editorState.crdt.write.state,
+          editor.page.write.state = {
+            ...editor.page.write.state,
             [new_name]: {
               name: new_name,
               type: "static",
@@ -68,7 +68,7 @@ const sortType = {
 };
 
 export const StateDock = () => {
-  const read = useSnapshot(editorState.crdt.write) as PageContent;
+  const read = useSnapshot(editor.page.write) as PageContent;
   const render = useState({})[1];
   current.render = () => render({});
   return (
@@ -95,7 +95,7 @@ export const StateDock = () => {
 
                     delete data[key];
                     current.mode = "view";
-                    editorState.crdt.write.state = data;
+                    editor.page.write.state = data;
                   }
                 }}
                 onChange={async (value) => {
@@ -127,7 +127,7 @@ export const StateDock = () => {
                       data[value] = existing;
                     }
                   }
-                  editorState.crdt.write.state = data;
+                  editor.page.write.state = data;
                 }}
               />
             );
@@ -307,7 +307,7 @@ const DataItem: FC<{
       >
         <StateEditItem
           read={read}
-          write={editorState.crdt.write.state[read.name]!}
+          write={editor.page.write.state[read.name]!}
         />
       </PopoverContent>
     </Popover>

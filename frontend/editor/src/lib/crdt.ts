@@ -1,3 +1,4 @@
+import type { PageContent } from "base/site/router";
 import { bind } from "immer-yjs";
 import { proxy, snapshot, subscribe } from "valtio";
 import { WebsocketProvider } from "y-websocket";
@@ -32,10 +33,12 @@ export const connectCRDT = <T extends Record<string, unknown>>({
   type,
   id,
   render,
+  onUpdate,
 }: {
   type: string;
   id: string;
   render: () => void;
+  onUpdate: (data: T) => void;
 }) => {
   const ydoc = new Y.Doc();
 
@@ -60,6 +63,9 @@ export const connectCRDT = <T extends Record<string, unknown>>({
       for (const [key, value] of Object.entries(map)) {
         (write as any)[key] = value;
       }
+
+      onUpdate(map as T);
+
       setTimeout(() => {
         state.updatingFromServer = false;
       });

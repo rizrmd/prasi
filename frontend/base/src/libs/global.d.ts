@@ -6,7 +6,7 @@ import { initSite } from "../site/init-site";
 import { navigate as import_navigate } from "./navigate";
 import { css as import_css } from "goober";
 import { cx as import_cx } from "./cx";
-import type { createViWrite } from "src/prasi/vi/vi-state";
+import type { createViWrite } from "base/prasi/vi/vi-state";
 import type { db as import_db } from "backend/db/use";
 import type { enhancePrisma } from "utils/prisma";
 declare global {

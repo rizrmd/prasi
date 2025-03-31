@@ -1,5 +1,5 @@
-import type { IItem } from "src/prasi/logic/types";
-import { createViWrite } from "src/prasi/vi/vi-state";
+import type { IItem } from "base/prasi/logic/types";
+import { createViWrite } from "base/prasi/vi/vi-state";
 import { proxy } from "valtio";
 
 export type PageRoute = { id: string; url: string; name: string };

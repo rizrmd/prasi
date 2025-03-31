@@ -1,5 +1,5 @@
-import type { FNPadding } from "src/prasi/logic/types";
-import { responsiveVal } from "src/prasi/utils/responsive-val";
+import type { FNPadding } from "base/prasi/logic/types";
+import { responsiveVal } from "base/prasi/utils/responsive-val";
 
 export const cssPadding = (
   cur: { padding?: FNPadding },

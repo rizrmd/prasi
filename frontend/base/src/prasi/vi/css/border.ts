@@ -1,6 +1,6 @@
 import get from "lodash.get";
-import type { FNBorder } from "src/prasi/logic/types";
-import { responsiveVal } from "src/prasi/utils/responsive-val";
+import type { FNBorder } from "base/prasi/logic/types";
+import { responsiveVal } from "base/prasi/utils/responsive-val";
 
 export const cssBorder = (
   cur: { border?: FNBorder },

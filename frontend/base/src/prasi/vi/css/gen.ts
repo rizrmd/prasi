@@ -1,4 +1,4 @@
-import type { IItem } from "src/prasi/logic/types";
+import type { IItem } from "base/prasi/logic/types";
 import { cssAdv } from "./advanced";
 import { cssBackground } from "./background";
 import { cssBorder } from "./border";

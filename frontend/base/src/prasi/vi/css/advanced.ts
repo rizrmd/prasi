@@ -1,5 +1,5 @@
-import type { FNAdv, MetaItem } from "src/prasi/logic/types";
-import { responsiveVal } from "src/prasi/utils/responsive-val";
+import type { FNAdv, MetaItem } from "base/prasi/logic/types";
+import { responsiveVal } from "base/prasi/utils/responsive-val";
 
 export const cssAdv = (
   cur: { adv?: FNAdv; type: MetaItem["type"] },

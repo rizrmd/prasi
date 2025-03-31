@@ -6,6 +6,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
+    "@minoru/react-dnd-treeview": "^3.5.0",
     "@monaco-editor/react": "^4.7.0-rc.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -21,13 +22,13 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fflate": "^0.8.2",
+    "hotkeys-js": "^3.13.9",
     "immer": "^10.1.1",
     "immer-yjs": "^1.1.1",
     "lucide-react": "^0.482.0",
     "monaco-editor": "^0.52.2",
     "monaco-tailwindcss": "^0.6.1",
     "msgpackr": "^1.11.2",
-    "react-hot-keys": "^2.7.3",
     "react-resizable-panels": "^2.1.7",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",

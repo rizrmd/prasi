@@ -1,5 +1,5 @@
 import { type FC } from "react";
-import { router } from "src/site/router";
+import { type Router } from "base/site/router";
 import { ref } from "valtio";
 import type { DeepReadonly, FNCompDef, IItem } from "../logic/types";
 import { ViItem } from "./vi-item";
@@ -9,8 +9,9 @@ export const ViComponent: FC<{
   item: DeepReadonly<IItem>;
   is_layout: boolean;
   paths: ItemPaths;
+  router: Router;
   passprop?: { idx: any } & Record<string, any>;
-}> = ({ item, is_layout, paths, passprop }) => {
+}> = ({ item, is_layout, paths, passprop, router }) => {
   const { instances, write } = viState({ is_layout, item, paths });
   const component = router.components[item.component!.id]!;
   const instance_id = passprop ? `${item.id}-${passprop.idx}` : item.id;
@@ -33,7 +34,7 @@ export const ViComponent: FC<{
 
     if (master_props) {
       for (const [k, v] of Object.entries(master_props)) {
-        props[k] = parseProp(k, v, item, paths, scope);
+        props[k] = parseProp(k, v, item, paths, scope, router);
       }
     }
 
@@ -87,6 +88,7 @@ export const ViComponent: FC<{
       item={instance.item}
       is_layout={is_layout}
       paths={paths}
+      router={router}
       passprop={passprop}
     />
   );
@@ -97,7 +99,8 @@ const parseProp = (
   master_prop: FNCompDef,
   item: DeepReadonly<IItem>,
   paths: ItemPaths,
-  scope: any
+  scope: any,
+  router: Router
 ) => {
   const prop = item.component!.props[k]!;
   if (master_prop.meta?.type === "content-element") {
@@ -116,6 +119,7 @@ const parseProp = (
             <ViItem
               is_layout={is_layout}
               item={content}
+              router={router}
               paths={[...paths, { id: item.id }]}
               passprop={passprop}
             />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import type { DeepReadonly, IItem } from "src/prasi/logic/types";
+import type { DeepReadonly, IItem } from "base/prasi/logic/types";
 import { modifyChildren } from "./modify-children";
 import type { ItemWriteState } from "../vi-state";
 import { useSnapshot } from "valtio";

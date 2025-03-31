@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { DeepReadonly, IItem } from "src/prasi/logic/types";
+import type { DeepReadonly, IItem } from "base/prasi/logic/types";
 import type { ItemPath, ItemPaths } from "../vi-state";
 
 export const modifyChildren = (

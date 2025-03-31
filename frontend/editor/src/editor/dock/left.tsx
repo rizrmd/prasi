@@ -1,4 +1,6 @@
 import { StateAction, StateDock } from "./state/state-dock";
+import { StructureAction } from "./structure/structure-action";
+import { StructureDock } from "./structure/structure-dock";
 import VerticalBorderedTabs from "./tabs";
 
 export const LeftDock = () => {
@@ -14,9 +16,11 @@ export const LeftDock = () => {
               </div>
               <div className="flex items-center">
                 {tab === "state" && <StateAction />}
+                {tab === "state" && <StructureAction />}
               </div>
             </div>
             {tab === "state" && <StateDock />}
+            {tab === "structure" && <StructureDock />}
           </div>
         );
       }}

@@ -1,5 +1,5 @@
-import type { IItem } from "src/prasi/logic/types";
-import { router, type PageContent } from "src/site/router";
+import type { IItem } from "base/prasi/logic/types";
+import { router, type PageContent } from "base/site/router";
 
 export const getPathname = (pathname: string) => {
   if (pathname.startsWith(window.prasi_site.baseurl)) {

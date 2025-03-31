@@ -7,7 +7,7 @@ import type { FC, ReactNode, RefAttributes } from "react";
 const tabs = [
   {
     value: "state",
-    title: "Data & Action",
+    title: "Data State",
     icon: TableProperties,
   },
   {

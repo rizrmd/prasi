@@ -12,13 +12,15 @@ import { viPassProp } from "./script/vi-passprop";
 import { ViItem } from "./vi-item";
 import { viProps } from "./vi-props";
 import { viRead, viState, type ItemPaths } from "./vi-state";
+import type { Router } from "base/site/router";
 
 export const ViScript: FC<{
   item: DeepReadonly<IItem>;
   is_layout: boolean;
+  router: Router;
   paths: ItemPaths;
   passprop?: { idx: any } & Record<string, any>;
-}> = ({ item, is_layout, paths, passprop }) => {
+}> = ({ item, is_layout, paths, passprop, router }) => {
   const vi = viRead();
   const render = useState({})[1];
   const { write, all, instances } = viState({ is_layout, item, paths });
@@ -57,6 +59,7 @@ export const ViScript: FC<{
           return (
             <ViItem
               item={e}
+              router={router}
               key={key}
               is_layout={is_layout}
               passprop={passprop}

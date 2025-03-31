@@ -1,5 +1,5 @@
-import type { FNDimension, MetaItem } from "src/prasi/logic/types";
-import { responsiveVal } from "src/prasi/utils/responsive-val";
+import type { FNDimension, MetaItem } from "base/prasi/logic/types";
+import { responsiveVal } from "base/prasi/utils/responsive-val";
 
 export const cssDimension = (
   cur: { dim?: FNDimension; type: MetaItem["type"] },

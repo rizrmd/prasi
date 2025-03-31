@@ -1,4 +1,4 @@
-import type { IItem } from "src/prasi/logic/types";
+import type { IItem } from "base/prasi/logic/types";
 
 export const cssEditor = ({
   item,

@@ -19,7 +19,7 @@ export const RightClick = forwardRef<
   return (
     <ContextMenu onOpenChange={onOpenChange}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-64">
+      <ContextMenuContent >
         {menu?.map((item, idx) => (
           <ContextMenuItem
             key={idx}

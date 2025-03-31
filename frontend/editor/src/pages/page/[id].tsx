@@ -1,7 +1,9 @@
 import { Spinner } from "@/components/ui/spinner";
 import { EditorMain } from "@/editor/main";
-import { editorState } from "@/editor/state/layout";
+import { editor } from "@/editor/state/layout";
 import { connectCRDT, type CRDT } from "@/lib/crdt";
+import { createViWrite } from "base/prasi/vi/vi-state";
+import type { PageContent } from "base/site/router";
 import { useEffect, useRef, useState } from "react";
 
 export default () => {
@@ -11,11 +13,26 @@ export default () => {
   const render = useState({})[1];
 
   useEffect(() => {
-    ref.crdt = connectCRDT({
+    window.viWrite = createViWrite();
+    ref.crdt = connectCRDT<PageContent>({
       type: "page",
       id: params.id,
       render: () => {
         render({});
+      },
+      onUpdate(data) {
+        for (const id of data.component_ids) {
+          if (!editor.comp[id]) {
+            editor.comp[id] = connectCRDT({
+              type: "comp",
+              id,
+              render: () => {
+                render({});
+              },
+              onUpdate(data) {},
+            });
+          }
+        }
       },
     });
 
@@ -28,13 +45,13 @@ export default () => {
   const crdt = ref.crdt;
   if (!crdt) return <Spinner size="lg" />;
 
-  if (editorState.crdt !== crdt) {
-    if (editorState.crdt) {
+  if (editor.page !== crdt) {
+    if (editor.page) {
       setTimeout(() => {
         render({});
       }, 0);
     }
-    editorState.crdt = crdt;
+    editor.page = crdt;
   }
 
   return <EditorMain />;

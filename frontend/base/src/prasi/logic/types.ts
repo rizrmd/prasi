@@ -182,3 +182,17 @@ export type PNode = {
     };
   };
 };
+
+export type EBaseComp = {
+  id: string;
+  content_tree: IItem;
+  id_component_group: string | null;
+  color: string | null;
+};
+export type EComp = EBaseComp & {
+  tree: {
+    find: (
+      fn: (node: { item: IItem; parent?: string }) => boolean
+    ) => IItem | null;
+  };
+};

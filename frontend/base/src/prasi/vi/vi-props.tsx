@@ -1,5 +1,4 @@
 import type { DeepReadonly, IItem } from "../logic/types";
-import { cssDimension } from "./css/dimension";
 import { produceCSS } from "./css/gen";
 
 export type DIV_PROPS = React.DetailedHTMLProps<

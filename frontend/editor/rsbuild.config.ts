@@ -14,6 +14,10 @@ export default defineConfig({
       },
     ],
   },
+
+  resolve: {
+    alias: { base: "../base/src" },
+  },
   dev: {
     progressBar: false,
     hmr: false,

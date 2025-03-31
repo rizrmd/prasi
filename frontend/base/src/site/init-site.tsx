@@ -1,8 +1,8 @@
 import type { ReactElement } from "react";
-import { initNavigation } from "src/libs/navigate";
-import type { IItem } from "src/prasi/logic/types";
-import { PrasiRoot } from "src/prasi/root";
-import { createViWrite } from "src/prasi/vi/vi-state";
+import { initNavigation } from "base/libs/navigate";
+import type { IItem } from "base/prasi/logic/types";
+import { PrasiRoot } from "base/prasi/root";
+import { createViWrite } from "base/prasi/vi/vi-state";
 import { subscribe } from "valtio";
 import { router, type PageContent, type PageRoute } from "./router";
 

@@ -1,36 +1,31 @@
 import Dock from "@/components/ui/dock";
 import { Spinner } from "@/components/ui/spinner";
-import { editorState, writeLayout } from "@/editor/state/layout";
-import { type FC } from "react";
-import Hotkeys from "react-hot-keys";
+import { editor, writeLayout } from "@/editor/state/layout";
+import hotkeys from "hotkeys-js";
+import { useEffect, type FC } from "react";
 import { useSnapshot } from "valtio";
+import { CenterDock } from "./dock/center";
 import { LeftDock } from "./dock/left";
-import { EditorPreview } from "./preview";
 
 export const EditorMain: FC = () => {
   const readLayout = useSnapshot(writeLayout);
-  const read = useSnapshot(editorState.crdt.write);
+  const read = useSnapshot(editor.page.write);
+  useEffect(() => {
+    hotkeys("ctrl+z, cmd+z", (event) => {
+      editor.page.undo();
+    });
+    hotkeys("ctrl+shift+z, cmd+shift+z, ctrl+y", (event) => {
+      editor.page.redo();
+    });
+    hotkeys("ctrl+s, cmd+s", (event) => {
+      event.preventDefault();
+    });
+  }, []);
 
   if (!read.id) return <Spinner size="lg" />;
 
   return (
     <>
-      <Hotkeys
-        keyName="ctrl+z, cmd+z"
-        onKeyDown={() => {
-          console.log('undo')
-          editorState.crdt.undo();
-        }}
-        allowRepeat
-      ></Hotkeys>
-      <Hotkeys
-        keyName="ctrl+shift+z, cmd+shift+z, ctrl+y"
-        onKeyDown={() => {
-          console.log('redo')
-          editorState.crdt.redo();
-        }}
-        allowRepeat
-      ></Hotkeys>
       <Dock
         position="left"
         isVisible={true}
@@ -50,14 +45,14 @@ export const EditorMain: FC = () => {
       </Dock>
       <div
         className={cn(
-          "flex flex-1 w-full h-full bg-amber-100",
+          "flex flex-1 w-full h-full",
           css`
             padding-left: ${100 * readLayout.left.size}%;
             padding-right: ${100 * readLayout.right.size}%;
           `
         )}
       >
-        <EditorPreview />
+        <CenterDock />
       </div>
       <Dock
         position="right"
