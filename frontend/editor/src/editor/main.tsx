@@ -1,6 +1,6 @@
 import Dock from "@/components/ui/dock";
 import { Spinner } from "@/components/ui/spinner";
-import { editor, writeLayout } from "@/editor/state/layout";
+import { editor, writeLayout } from "@/editor/state/editor";
 import hotkeys from "hotkeys-js";
 import { useEffect, type FC } from "react";
 import { useSnapshot } from "valtio";
@@ -30,10 +30,7 @@ export const EditorMain: FC = () => {
         position="left"
         isVisible={true}
         dimMode="none"
-        size={
-          parseFloat(localStorage.getItem("prasi.editor.left.size") || "0") ||
-          readLayout.left.size
-        }
+        size={readLayout.left.size}
         onSizeChange={(size) => {
           if (size > 0.09) {
             writeLayout.left.size = size;

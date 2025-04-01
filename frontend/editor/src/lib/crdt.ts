@@ -64,11 +64,13 @@ export const connectCRDT = <T extends Record<string, unknown>>({
         (write as any)[key] = value;
       }
 
-      onUpdate(map as T);
+      onUpdate(write as T);
 
       setTimeout(() => {
         state.updatingFromServer = false;
       });
+    } else {
+      onUpdate(write as T);
     }
   });
 

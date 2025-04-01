@@ -11,7 +11,8 @@ export const ViComponent: FC<{
   paths: ItemPaths;
   router: Router;
   passprop?: { idx: any } & Record<string, any>;
-}> = ({ item, is_layout, paths, passprop, router }) => {
+  error?: (e: Error) => void;
+}> = ({ item, is_layout, paths, passprop, router, error }) => {
   const { instances, write } = viState({ is_layout, item, paths });
   const component = router.components[item.component!.id]!;
   const instance_id = passprop ? `${item.id}-${passprop.idx}` : item.id;
@@ -90,6 +91,7 @@ export const ViComponent: FC<{
       paths={paths}
       router={router}
       passprop={passprop}
+      error={error}
     />
   );
 };

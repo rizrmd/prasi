@@ -7,6 +7,7 @@ export const flattenTree = (
   items: IItem[],
   comps: Record<string, EBaseComp>,
   opt?: {
+    root?: any;
     visit?: (item: IItem) => void;
     comp_id?: string;
   },
@@ -25,7 +26,14 @@ export const flattenTree = (
 ) => {
   const models: NodeModel<PNode>[] = arg?.models
     ? arg.models
-    : [{ id: "root", text: "", data: { id: "root" } as any, parent: "" }];
+    : [
+        {
+          id: "root",
+          text: "",
+          data: (opt?.root || { id: "root" }) as any,
+          parent: "",
+        },
+      ];
   const array: PNode[] = arg?.array ? arg.array : [];
   const map: Record<string, PNode> = arg?.map ? arg.map : {};
 

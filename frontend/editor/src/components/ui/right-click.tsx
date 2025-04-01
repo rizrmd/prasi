@@ -9,10 +9,11 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useLocal } from "base/libs/use-local";
 import type { ForwardedRef, ReactNode } from "react";
 import { forwardRef } from "react";
 
-type MenuItem =
+export type MenuItem =
   | {
       title?: ReactNode;
       onClick?: () => void;
@@ -30,7 +31,12 @@ export const RightClick = forwardRef<
   }
 >(({ children, menu, onOpenChange }, ref: ForwardedRef<HTMLDivElement>) => {
   return (
-    <ContextMenu onOpenChange={onOpenChange}>
+    <ContextMenu
+      onOpenChange={(open) => {
+        onOpenChange?.(open);
+      }}
+      modal={false}
+    >
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
         {menu?.map((item, idx) => {
@@ -41,9 +47,7 @@ export const RightClick = forwardRef<
           if (item.children) {
             return (
               <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                  {item.title}
-                </ContextMenuSubTrigger>
+                <ContextMenuSubTrigger>{item.title}</ContextMenuSubTrigger>
                 <ContextMenuSubContent className="w-48">
                   {item.children.map((subItem, subIdx) => {
                     if (typeof subItem === "string") {
@@ -53,8 +57,8 @@ export const RightClick = forwardRef<
                     return (
                       <ContextMenuItem
                         key={subIdx}
-                        onClick={() => {
-                          if (subItem.onClick) setTimeout(subItem.onClick, 300);
+                        onClick={(e) => {
+                          if (subItem.onClick) setTimeout(subItem.onClick, 0);
                         }}
                       >
                         {subItem.title}
@@ -73,8 +77,10 @@ export const RightClick = forwardRef<
           return (
             <ContextMenuItem
               key={idx}
-              onClick={() => {
-                if (item.onClick) setTimeout(item.onClick, 300);
+              onClick={(e) => {
+                if (item.onClick) setTimeout(item.onClick, 0);
+                e.stopPropagation();
+                e.preventDefault();
               }}
             >
               {item.title}

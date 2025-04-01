@@ -1,12 +1,9 @@
-import { editor } from "@/editor/state/layout";
-import { subscribe, useSnapshot } from "valtio";
+import { editor } from "@/editor/state/editor";
 import { ViItem } from "base/prasi/vi/vi-item";
-import type { PageContent } from "base/site/router";
 import { useEffect } from "react";
+import { snapshot, subscribe } from "valtio";
 
 export const PreviewDock = () => {
-  const read = useSnapshot(editor.page.write) as PageContent;
-
   useEffect(() => {
     const router = editor.router;
     const unsub = subscribe(router.componentPendingRender, async (op) => {
@@ -19,7 +16,7 @@ export const PreviewDock = () => {
     };
   }, []);
 
-  return read.childs.map((item, idx) => {
+  return editor.page.write.childs.map((item, idx) => {
     return (
       <ViItem
         key={idx}
@@ -27,6 +24,9 @@ export const PreviewDock = () => {
         is_layout={false}
         router={editor.router}
         paths={[]}
+        error={(e) => {
+          console.error(e);
+        }}
       />
     );
   });

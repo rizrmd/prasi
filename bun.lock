@@ -87,6 +87,7 @@
       "dependencies": {
         "@minoru/react-dnd-treeview": "^3.5.0",
         "@monaco-editor/react": "^4.7.0-rc.0",
+        "@orama/cuid2": "^2.2.3",
         "@radix-ui/react-accordion": "^1.2.3",
         "@radix-ui/react-alert-dialog": "^1.1.6",
         "@radix-ui/react-checkbox": "^1.1.4",

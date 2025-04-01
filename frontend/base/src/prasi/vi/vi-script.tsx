@@ -20,7 +20,8 @@ export const ViScript: FC<{
   router: Router;
   paths: ItemPaths;
   passprop?: { idx: any } & Record<string, any>;
-}> = ({ item, is_layout, paths, passprop, router }) => {
+  error?: (e: Error) => void;
+}> = ({ item, is_layout, paths, passprop, router, error }) => {
   const vi = viRead();
   const render = useState({})[1];
   const { write, all, instances } = viState({ is_layout, item, paths });
@@ -63,6 +64,7 @@ export const ViScript: FC<{
               key={key}
               is_layout={is_layout}
               passprop={passprop}
+              error={error}
               paths={[...paths, { id: item.id }]}
             />
           );

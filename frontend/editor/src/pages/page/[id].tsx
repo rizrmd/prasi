@@ -1,7 +1,7 @@
 import { Spinner } from "@/components/ui/spinner";
 import { flattenTree } from "@/editor/dock/structure/utils/flatten-tree";
 import { EditorMain } from "@/editor/main";
-import { editor } from "@/editor/state/layout";
+import { editor } from "@/editor/state/editor";
 import { connectCRDT, type CRDT } from "@/lib/crdt";
 import type { EBaseComp } from "base/prasi/logic/types";
 import { createViWrite } from "base/prasi/vi/vi-state";
@@ -47,7 +47,7 @@ export default () => {
         }
 
         await Promise.all(promises);
-        const tree = flattenTree(data.childs, comps);
+        const tree = flattenTree(data.childs, comps, { root: { item: data } });
         editor.tree.page.list = tree.models;
         editor.tree.page.map = tree.map;
       },

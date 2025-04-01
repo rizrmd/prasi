@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { editor } from "@/editor/state/layout";
+import { editor } from "@/editor/state/editor";
 import { useLocal } from "base/libs/use-local";
 import type { PageContent, PageState } from "base/site/router";
 import {
