@@ -38,7 +38,13 @@ export const RightClick = forwardRef<
       modal={false}
     >
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
+      <ContextMenuContent
+        replaceClassName
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-context-menu-content-available-height) min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto border",
+          css``
+        )}
+      >
         {menu?.map((item, idx) => {
           if (typeof item === "string") {
             return <ContextMenuSeparator key={idx} />;
@@ -48,7 +54,12 @@ export const RightClick = forwardRef<
             return (
               <ContextMenuSub>
                 <ContextMenuSubTrigger>{item.title}</ContextMenuSubTrigger>
-                <ContextMenuSubContent className="w-48">
+                <ContextMenuSubContent
+                  replaceClassName
+                  className={cn(
+                    "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden border"
+                  )}
+                >
                   {item.children.map((subItem, subIdx) => {
                     if (typeof subItem === "string") {
                       return <ContextMenuSeparator key={subIdx} />;

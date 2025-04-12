@@ -1,26 +1,28 @@
+import { Button } from "@/components/ui/button";
 import { editor } from "@/editor/state/editor";
 import {
   getBackendOptions,
   MultiBackend,
   Tree,
 } from "@minoru/react-dnd-treeview";
+import { createId } from "@orama/cuid2";
 import type { PNode } from "base/prasi/logic/types";
+import { Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
-import { useSnapshot } from "valtio";
+import { ref, useSnapshot } from "valtio";
 import { renderTreeItem } from "./parts/tree-item";
 import { Placeholder } from "./parts/tree-item-drag";
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { createId } from "@orama/cuid2";
+import { treeCanDrop, treeOnDrop } from "./utils/tree-on-drop";
 
 export const StructureDock = () => {
   const read = useSnapshot(editor.tree.current.get());
   const render = useState({})[1];
-  const ref = useRef<HTMLDivElement>(null);
+  const div = useRef<HTMLDivElement>(null);
   const TypedTree = Tree<PNode>;
 
   useEffect(() => {
+    editor.tree.render = ref(() => render({}));
     render({});
   }, []);
 
@@ -28,7 +30,7 @@ export const StructureDock = () => {
 
   return (
     <div
-      ref={ref}
+      ref={div}
       className={cn("relative overflow-auto flex-1 h-full w-full")}
     >
       {read.list.length === 1 ? (
@@ -57,11 +59,11 @@ export const StructureDock = () => {
         </div>
       ) : (
         <>
-          {ref.current && (
+          {div.current && (
             <DndProvider
               backend={MultiBackend}
               options={getBackendOptions({
-                html5: { rootElement: ref.current },
+                html5: { rootElement: div.current },
               })}
             >
               <TypedTree
@@ -70,7 +72,12 @@ export const StructureDock = () => {
                   root: "absolute inset-0 flex flex-col items-stretch",
                 }}
                 rootId={"root"}
-                onDrop={() => {}}
+                onDrop={(tree, options) => treeOnDrop(tree, options)}
+                canDrop={(_, args) => {
+                  if (!args.dragSource?.data?.item) return false;
+                  return treeCanDrop(args);
+                }}
+                initialOpen
                 sort={false}
                 canDrag={(node) => {
                   if (node) {
@@ -80,6 +87,20 @@ export const StructureDock = () => {
                   }
 
                   return true;
+                }}
+                dragPreviewRender={({ clientOffset, isDragging, item }) => {
+                  const node = item;
+                  return (
+                    <div
+                      className={cx(
+                        "bg-primary text-primary-foreground px-4 py-[2px] text-sm inline-grid rounded-[3px]"
+                      )}
+                    >
+                      <div>
+                        {node.data?.item?.name || (node.data as any)?.name}
+                      </div>
+                    </div>
+                  );
                 }}
                 insertDroppableFirst={false}
                 dropTargetOffset={10}

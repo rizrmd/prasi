@@ -6,6 +6,7 @@ import { useEffect, type FC } from "react";
 import { useSnapshot } from "valtio";
 import { CenterDock } from "./dock/center";
 import { LeftDock } from "./dock/left";
+import { RightDock } from "./dock/right";
 
 export const EditorMain: FC = () => {
   const readLayout = useSnapshot(writeLayout);
@@ -59,7 +60,9 @@ export const EditorMain: FC = () => {
         onSizeChange={(size) => {
           writeLayout.right.size = size;
         }}
-      ></Dock>
+      >
+        <RightDock />
+      </Dock>
     </>
   );
 };

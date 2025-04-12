@@ -1,6 +1,13 @@
 import type { Editor as MonacoEditor } from "@monaco-editor/react";
+import type { OnMount } from "@monaco-editor/react";
+export type MonacoEditor = Parameters<OnMount>[0];
+export type Monaco = Parameters<OnMount>[1];
 
 export const code = {
+  active: {
+    editor: null as null | MonacoEditor,
+    monaco: null as null | Monaco,
+  },
   MonacoEditor: null as typeof MonacoEditor | null,
   getTailwindStyles: null as null | ((contents: string[]) => Promise<string>),
   pending: null as null | Promise<void>,

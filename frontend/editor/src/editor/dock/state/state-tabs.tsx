@@ -35,14 +35,28 @@ export default function StateTabs({
         current.tab = value;
       }}
     >
-      <div className="border-b flex w-full border-b-primary justify-between items-stretch">
-        <TabsList className="flex px-2 pt-1 pb-0 bg-background justify-start rounded-none">
+      <div
+        className={cn(
+          "border-b flex w-full border-b-primary justify-between items-stretch bg-primary",
+          css`
+            border-top-right-radius: var(--radius);
+            background-image: repeating-linear-gradient(
+              -45deg,
+              #ffffff14 10px,
+              #ffffff14 16px,
+              transparent 12px,
+              transparent 20px
+            );
+          `
+        )}
+      >
+        <TabsList className="flex px-1 pt-1 pb-0 justify-start rounded-none bg-transparent text-primary-foreground">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
               className={cn(
-                "rounded-none bg-transparent h-full data-[state=active]:shadow-none border border-transparent border-b-primary data-[state=active]:border-primary -mb-[2px] rounded-t cursor-pointer",
+                "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:text-muted-foreground inline-flex  flex-1 items-center justify-center gap-1.5  px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 rounded-none bg-transparent h-full data-[state=active]:shadow-none border border-transparent border-b-primary data-[state=active]:border-primary -mb-[2px] rounded-t cursor-pointer data-[state=active]:text-foreground text-primary-foreground",
                 css`
                   border-bottom: 0;
                 `
@@ -52,7 +66,7 @@ export default function StateTabs({
             </TabsTrigger>
           ))}
         </TabsList>
-        <div className="flex items-center pr-2">
+        <div className="flex items-center pr-[5px]">
           <Picker
             menu={[
               {
@@ -90,7 +104,7 @@ export default function StateTabs({
               return (
                 <Badge
                   variant={open ? "default" : "outline"}
-                  className="py-0 px-2 rounded-sm cursor-pointer border-primary"
+                  className="py-0 px-2 cursor-pointer text-secondary-foreground bg-secondary border-primary-foreground"
                 >
                   <div
                     className={cn(

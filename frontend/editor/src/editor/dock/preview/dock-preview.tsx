@@ -1,7 +1,7 @@
 import { editor } from "@/editor/state/editor";
 import { ViItem } from "base/prasi/vi/vi-item";
 import { useEffect } from "react";
-import { snapshot, subscribe } from "valtio";
+import { subscribe } from "valtio";
 
 export const PreviewDock = () => {
   useEffect(() => {

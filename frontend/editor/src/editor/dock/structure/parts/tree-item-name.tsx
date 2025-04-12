@@ -1,6 +1,6 @@
 import { editor } from "@/editor/state/editor";
 import type { NodeModel, RenderParams } from "@minoru/react-dnd-treeview";
-import type { IItem, PNode } from "base/prasi/logic/types";
+import type { PNode } from "base/prasi/logic/types";
 import { ComponentIcon } from "lucide-react";
 import { type FC, type ReactNode } from "react";
 import { useSnapshot } from "valtio";
@@ -15,8 +15,8 @@ export const formatItemName = (name: string) => {
 
 export const TreeItemName: FC<{
   node: NodeModel<PNode>;
-  params: RenderParams;
-}> = ({ node, params }) => {
+  render_params: RenderParams;
+}> = ({ node, render_params }) => {
   const read = useSnapshot(editor.tree);
   const isRenaming = read.renaming.id === node.data?.item.id;
 
@@ -29,14 +29,22 @@ export const TreeItemName: FC<{
   return (
     <div
       className={cn(
-        "text-[14px] relative flex flex-col justify-center cursor-pointer flex-1"
+        "text-[14px] relative flex flex-col justify-center cursor-pointer flex-1 active:outline-none focus:outline-none"
       )}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.stopPropagation();
+          editor.tree.renaming.id = item.id;
+          editor.tree.renaming.name = item.name;
+        }
+      }}
     >
       <div className="flex flex-row">
         {isRenaming ? (
           <input
             className={cx(
-              "rename-item absolute inset-0 outline-none bg-background text-primary my-[2px] -mx-1 px-1 border border-primary"
+              "rename-item absolute inset-0 outline-none bg-background text-primary self-stretch border border-primary px-1"
             )}
             autoFocus
             spellCheck={false}
@@ -66,7 +74,7 @@ export const TreeItemName: FC<{
             }}
           />
         ) : (
-          <NodeName node={data} render_params={params} />
+          <NodeName node={data} render_params={render_params} />
         )}
       </div>
     </div>

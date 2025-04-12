@@ -82,7 +82,6 @@ export const ViItem: FC<{
   try {
     return (
       <div {...props}>
-        {item.name}
         {item.childs.map((e, key) => (
           <ErrorBox key={key}>
             <ViItem

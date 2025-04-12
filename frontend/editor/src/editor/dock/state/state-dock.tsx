@@ -5,25 +5,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { RightClick } from "@/components/ui/right-click";
 import { editor } from "@/editor/state/editor";
 import { useLocal } from "base/libs/use-local";
 import type { PageContent, PageState } from "base/site/router";
 import {
-  Binary,
   FunctionSquare,
   HardDriveDownload,
-  HardDriveUpload,
-  LaptopMinimal,
   Plus,
   RectangleEllipsis,
-  RectangleHorizontal,
-  Type,
   Variable,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useSnapshot } from "valtio";
 import { StateEditItem } from "./state-edit-item";
-import { RightClick } from "@/components/ui/right-click";
 
 const current = {
   focused: "",
@@ -74,7 +69,7 @@ export const StateDock = () => {
   return (
     <div className="relative overflow-auto flex-1">
       <div className="absolute inset-0 text-sm">
-        {Object.entries(read.state || {})
+        {[...Object.entries(read.state || {})]
           .sort((a, b) =>
             `${sortType[a[1].type]}-${a[0]}`.localeCompare(
               `${sortType[b[1].type]}-${b[0]}`
@@ -171,6 +166,7 @@ const DataItem: FC<{
           current.focused = "";
         }
       }}
+      modal={false}
     >
       <RightClick
         menu={[
@@ -301,9 +297,20 @@ const DataItem: FC<{
       </RightClick>
 
       <PopoverContent
-        animation={local.animation}
-        className="z-10 text-sm p-0 rounded-none"
+        animation={false}
+        className={cn(
+          "z-10 text-sm p-0 shadow-none",
+          css`
+            border-radius: 0;
+            border-bottom-right-radius: var(--radius);
+            border-top-right-radius: var(--radius);
+            border-left: 0px;
+            border-top: 0;
+            margin-top: 10px;
+          `
+        )}
         side="right"
+        sideOffset={1}
       >
         <StateEditItem
           read={read}

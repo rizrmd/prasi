@@ -49,7 +49,7 @@ const styles = autoprefixes({
   dock: {
     position: "fixed",
     zIndex: 1,
-    boxShadow: "0 0 4px rgba(0, 0, 0, 0.3)",
+    boxShadow: "0 0 0px 1px rgba(0, 0, 0, 0.1)",
     background: "white",
     left: 0,
     top: 0,

@@ -50,6 +50,7 @@ export default () => {
         const tree = flattenTree(data.childs, comps, { root: { item: data } });
         editor.tree.page.list = tree.models;
         editor.tree.page.map = tree.map;
+        editor.tree.render();
       },
     });
 

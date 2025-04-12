@@ -17,6 +17,7 @@ export const editor = {
   page: null as unknown as CRDT<PageContent>,
   comp: {} as Record<string, CRDT<EBaseComp>>,
   tree: proxy({
+    render: ref(() => {}),
     current: {
       mode: "page" as "page" | "component",
       get: ref(() => {
@@ -39,6 +40,7 @@ export const editor = {
               map: Record<string, PNode>;
             };
             find: (id: string | number) => NodeModel<PNode> | null;
+            findParent: (id: string | number) => NodeModel<PNode> | null;
             childrenOf: (id: string | number) => NodeModel<PNode>[];
           }) => void
         ) => {
@@ -61,6 +63,15 @@ export const editor = {
                 }
                 return null;
               },
+              findParent: (id) => {
+                const node = tree.list.find(
+                  (i) => i.parent === id
+                ) as NodeModel<PNode>;
+                if (node) {
+                  return node;
+                }
+                return null;
+              },
               childrenOf: (id) => {
                 const node = tree.list.filter(
                   (i) => i.parent === id
@@ -77,10 +88,17 @@ export const editor = {
       string,
       { list: NodeModel<PNode>[]; map: Record<string, PNode> }
     >,
-    select: "",
+    select: {
+      id: "",
+      component_id: "",
+    },
+    expanded: {} as Record<string, string[]>,
     renaming: {
       id: "",
       name: "",
+    },
+    search: {
+      text: "",
     },
   }),
   bread: {
